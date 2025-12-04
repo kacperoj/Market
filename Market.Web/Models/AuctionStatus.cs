@@ -1,7 +1,12 @@
-public enum AuctionStatus
+namespace Market.Web.Models
 {
-    Available = 0,
-    Reserved = 1,
-    Sold = 2,
-    Pending = 3
+    public enum AuctionStatus
+    {
+    Draft = 0,  // szkic      
+    Active = 1,   // aktywnie wyświetlana na liście   
+    Sold = 2,        // sprzedana
+    Expired = 3,     // po terminie
+    Cancelled = 4,   // anulowana przez sprzedawcę
+    Suspended = 5    // zawieszona przez administratora
+    }
 }

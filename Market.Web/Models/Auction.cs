@@ -21,7 +21,7 @@ public class Auction
     [Display(Name = "Zdjęcie URL")]
     public string? ImageUrl { get; set; }
 
-    public AuctionStatus AuctionStatus { get; set; } = AuctionStatus.Available;
+    public AuctionStatus AuctionStatus { get; set; } = AuctionStatus.Active;
 
     public DateTime CreatedAt { get; set; } = DateTime.Now;
 

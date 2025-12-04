@@ -1,0 +1,33 @@
+@model IEnumerable<Market.Web.Models.Auction>
+
+@{
+    ViewData["Title"] = "Aukcje";
+}
+
+<h1>Aktualne Aukcje</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-success">+ Dodaj Nową</a>
+</p>
+
+<div class="row">
+    @foreach (var item in Model) {
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <img src="@(string.IsNullOrEmpty(item.ImageUrl) ? "https://via.placeholder.com/300" : item.ImageUrl)" 
+                     class="card-img-top" alt="@item.Title" style="height: 200px; object-fit: cover;">
+                
+                <div class="card-body">
+                    <h5 class="card-title">@item.Title</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">@item.Price.ToString("C")</h6>
+                    <p class="card-text text-truncate">@item.Description</p>
+                    
+                    <small class="text-muted">Sprzedawca: @(item.User?.Email ?? "Nieznany")</small>
+                </div>
+                <div class="card-footer bg-white border-top-0">
+                    <a href="#" class="btn btn-primary w-100">Zobacz szczegóły</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
