@@ -25,8 +25,14 @@
                     <small class="text-muted">Sprzedawca: @(item.User?.Email ?? "Nieznany")</small>
                 </div>
                 <div class="card-footer bg-white border-top-0">
-                    <a href="#" class="btn btn-primary w-100">Zobacz szczegóły</a>
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-primary w-100">Zobacz szczegóły</a>
                 </div>
+                
+            
+                <div class="card-footer bg-white border-top-0">
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary w-100">Edytuj</a>
+                </div>
+
             </div>
         </div>
     }

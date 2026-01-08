@@ -7,15 +7,15 @@ using Market.Web.Models;
 
 namespace Market.Web.Controllers;
 
-[Authorize] // Tylko zalogowani widzą aukcje
+[Authorize] 
 public class AuctionsController : Controller
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IAuctionRepository _repository;
     private readonly UserManager<ApplicationUser> _userManager;
 
-    public AuctionsController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+    public AuctionsController(IAuctionRepository repository, UserManager<ApplicationUser> userManager)
     {
-        _context = context;
+        _repository = repository;
         _userManager = userManager;
     }
 
@@ -23,15 +23,26 @@ public class AuctionsController : Controller
     [AllowAnonymous] // Listę mogą widzieć niezalogowani
     public async Task<IActionResult> Index()
     {
-        // Pobieramy aukcje i dołączamy dane autora (Include)
-        var auctions = await _context.Auctions
-            .Include(a => a.User) 
-            .OrderByDescending(a => a.CreatedAt)
-            .ToListAsync();
-            
+        var auctions = await _repository.GetAllAsync();
         return View(auctions);
     }
+     [AllowAnonymous]
+    public async Task<IActionResult> Details(int? id)
+    {
+        if (id == null)
+        {
+            return NotFound();
+        }
 
+        var auction = await _repository.GetByIdAsync(id.Value);
+
+        if (auction == null)
+        {
+            return NotFound();
+        }
+
+        return View(auction);
+    }
     // GET: Auctions/Create (Formularz)
     public IActionResult Create()
     {
@@ -44,7 +55,7 @@ public class AuctionsController : Controller
     public async Task<IActionResult> Create(Auction auction)
     {
         
-        var user = await _userManager.GetUserAsync(User);
+        var user = await GetCurrentUserAsync();
         if (user == null) return Challenge(); 
 
         
@@ -65,5 +76,10 @@ public class AuctionsController : Controller
         }
         
         return View(auction);
+    }
+    private async Task<ApplicationUser> GetCurrentUserAsync()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        return user;
     }
 }
