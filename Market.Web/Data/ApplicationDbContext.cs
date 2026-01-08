@@ -13,7 +13,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     }
 
     // Tabele
-    public DbSet<Auction> Auctions { get; set; } // Zmienilem na liczbe mnoga (Standard)
+    public DbSet<Auction> Auctions { get; set; } 
+    
+    public DbSet<AuctionImage> AuctionImages { get; set; }
     public DbSet<UserProfile> UserProfiles { get; set; }
     public DbSet<CompanyProfile> CompanyProfiles { get; set; }
 

@@ -77,33 +77,60 @@ public class AuctionsController : Controller
 
         return View(auction);
     }
-    // GET: Auctions/Create (Formularz)
+    // ...existing code...
+    // GET: Auctions/Create
     public IActionResult Create()
     {
         return View();
     }
 
-    // POST: Auctions/Create (Odbiór danych z formularza)
+    // POST: Auctions/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(Auction auction)
+    // Dodajemy parametr List<IFormFile> photos
+    public async Task<IActionResult> Create(Auction auction, List<IFormFile> photos)
     {
-        
         var user = await GetCurrentUserAsync();
         if (user == null) return Challenge(); 
 
-        
         auction.UserId = user.Id;
         auction.CreatedAt = DateTime.Now;
         auction.AuctionStatus = AuctionStatus.Active;
-        
-        
+
+        // Usuwamy walidację dla pól, których nie przesyłamy w formularzu wprost do modelu
         ModelState.Remove("UserId");
         ModelState.Remove("User");
+        ModelState.Remove("Images"); // Lista zdjęć jest pusta na początku, więc usuwamy błąd walidacji
 
-        
         if (ModelState.IsValid)
         {
+            // OBSŁUGA ZDJĘĆ
+            if (photos != null && photos.Count > 0)
+            {
+                foreach (var photo in photos)
+                {
+                    if (photo.Length > 0)
+                    {
+                        var fileName = Guid.NewGuid().ToString() + Path.GetExtension(photo.FileName);
+                        
+                        var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+                        
+                        if (!Directory.Exists(uploadDir)) Directory.CreateDirectory(uploadDir);
+
+                        var filePath = Path.Combine(uploadDir, fileName);
+
+                        using (var stream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await photo.CopyToAsync(stream);
+                        }
+                        auction.Images.Add(new AuctionImage 
+                        { 
+                            ImagePath = "/uploads/" + fileName 
+                        });
+                    }
+                }
+            }
+
             await _repository.AddAsync(auction);
             await _repository.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
