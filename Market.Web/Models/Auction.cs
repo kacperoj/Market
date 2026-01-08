@@ -6,9 +6,6 @@ public class Auction
 {
     public int Id { get; set; }
 
-    [Display(Name = "Link do zdjęcia")]
-    public string? ImageUrl { get; set; }
-
     [Required(ErrorMessage = "Tytuł jest wymagany.")]
     [StringLength(100, MinimumLength = 3)]
     public string Title { get; set; } = string.Empty;

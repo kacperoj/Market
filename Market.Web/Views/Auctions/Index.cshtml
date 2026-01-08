@@ -68,8 +68,14 @@
     @foreach (var item in Model) {
         <div class="col-md-4 mb-4">
             <div class="card h-100 shadow-sm">
-                <img src="@(string.IsNullOrEmpty(item.ImageUrl) ? "https://via.placeholder.com/300" : item.ImageUrl)" 
-                     class="card-img-top" alt="@item.Title" style="height: 200px; object-fit: cover;">
+               @{
+                    var indexImage = item.Images != null && item.Images.Any() 
+                                    ? item.Images.First().ImagePath 
+                                    : "https://via.placeholder.com/300";
+                }
+                <img src="@indexImage" 
+                     class="card-img-top" alt="@item.Title"
+                     style="height: 200px; object-fit: cover;" />
                 
                 <div class="card-body">
                     <h5 class="card-title">@item.Title</h5>
