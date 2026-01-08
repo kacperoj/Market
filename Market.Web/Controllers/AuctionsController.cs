@@ -20,7 +20,6 @@ public class AuctionsController : Controller
         _userManager = userManager;
     }
 
-    // GET: Auctions (Zaktualizowano o parametry filtrowania)
     [AllowAnonymous]
     public async Task<IActionResult> Index(string? searchString, string? category, decimal? minPrice, decimal? maxPrice, string? sortOrder)
     {
@@ -77,17 +76,15 @@ public class AuctionsController : Controller
 
         return View(auction);
     }
-    // ...existing code...
-    // GET: Auctions/Create
+
     public IActionResult Create()
     {
         return View();
     }
 
-    // POST: Auctions/Create
+
     [HttpPost]
     [ValidateAntiForgeryToken]
-    // Dodajemy parametr List<IFormFile> photos
     public async Task<IActionResult> Create(Auction auction, List<IFormFile> photos)
     {
         var user = await GetCurrentUserAsync();
@@ -97,14 +94,13 @@ public class AuctionsController : Controller
         auction.CreatedAt = DateTime.Now;
         auction.AuctionStatus = AuctionStatus.Active;
 
-        // Usuwamy walidację dla pól, których nie przesyłamy w formularzu wprost do modelu
+        
         ModelState.Remove("UserId");
         ModelState.Remove("User");
-        ModelState.Remove("Images"); // Lista zdjęć jest pusta na początku, więc usuwamy błąd walidacji
+        ModelState.Remove("Images"); 
 
         if (ModelState.IsValid)
         {
-            // OBSŁUGA ZDJĘĆ
             if (photos != null && photos.Count > 0)
             {
                 foreach (var photo in photos)
@@ -138,7 +134,92 @@ public class AuctionsController : Controller
         
         return View(auction);
     }
-    
+    public async Task<IActionResult> Edit(int? id) // Poprawiłem literówkę iActionResult -> IActionResult
+    {
+        if (id == null)
+        {
+            return NotFound();
+        }
+
+        var auction = await _repository.GetByIdAsync(id.Value);
+        if (auction == null)
+        {
+            return NotFound();
+        }
+
+        // SPRAWDZENIE BEZPIECZEŃSTWA: Czy edytujący to właściciel?
+        var user = await GetCurrentUserAsync();
+        if (user == null || auction.UserId != user.Id)
+        {
+            return Forbid(); // Zwraca brak dostępu
+        }
+
+        return View(auction);
+    }
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+
+    public async Task<IActionResult> Edit(int id, Auction auction, List<IFormFile> photos)
+    {
+        if (id != auction.Id)
+        {
+            return NotFound();
+        }
+        var auctionToUpdate = await _repository.GetByIdAsync(id);
+        
+        if (auctionToUpdate == null) return NotFound();
+
+        var user = await GetCurrentUserAsync();
+        if (user == null || auctionToUpdate.UserId != user.Id)
+        {
+            return Forbid();
+        }
+
+        ModelState.Remove("UserId");
+        ModelState.Remove("User");
+        ModelState.Remove("Images");
+
+        if (ModelState.IsValid)
+        {
+            auctionToUpdate.Title = auction.Title;
+            auctionToUpdate.Description = auction.Description;
+            auctionToUpdate.Price = auction.Price;
+            auctionToUpdate.Category = auction.Category;
+
+            if (photos != null && photos.Count > 0)
+            {
+                foreach (var photo in photos)
+                {
+                    if (photo.Length > 0)
+                    {
+                        var fileName = Guid.NewGuid().ToString() + Path.GetExtension(photo.FileName);
+                        var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+                        if (!Directory.Exists(uploadDir)) Directory.CreateDirectory(uploadDir);
+                        var filePath = Path.Combine(uploadDir, fileName);
+
+                        using (var stream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await photo.CopyToAsync(stream);
+                        }
+
+                        if (auctionToUpdate.Images == null) 
+                            auctionToUpdate.Images = new List<AuctionImage>();
+                            
+                        auctionToUpdate.Images.Add(new AuctionImage 
+                        { 
+                            ImagePath = "/uploads/" + fileName 
+                        });
+                    }
+                }
+            }
+
+            await _repository.SaveChangesAsync();
+            
+            return RedirectToAction(nameof(Index));
+        }
+        
+        return View(auctionToUpdate);
+    }
     private async Task<ApplicationUser> GetCurrentUserAsync()
     {
         var user = await _userManager.GetUserAsync(User);
