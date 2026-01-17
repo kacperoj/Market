@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Market.Web.Data;
 using Market.Web.Models;
 using Market.Web.Repositories;
+using Market.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,10 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IAuctionRepository, AuctionRepository>();
 
 builder.Services.AddScoped<Market.Web.Services.IAdminService, Market.Web.Services.AdminService>(); 
+
+builder.Services.AddHttpClient<IADescriptionService, OpenRouterAiService>();
+
+builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 

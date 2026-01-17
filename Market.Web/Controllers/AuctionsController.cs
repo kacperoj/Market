@@ -4,7 +4,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Market.Web.Data;
 using Market.Web.Models;
-using Market.Web.Repositories; // -- 1. Dodano brakujący using
+using Market.Web.Repositories;
+using Market.Web.Services;
 
 namespace Market.Web.Controllers;
 
@@ -13,11 +14,13 @@ public class AuctionsController : Controller
 {
     private readonly IAuctionRepository _repository;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IADescriptionService _aiService;
 
-    public AuctionsController(IAuctionRepository repository, UserManager<ApplicationUser> userManager)
+    public AuctionsController(IAuctionRepository repository, UserManager<ApplicationUser> userManager, IADescriptionService aiService)
     {
         _repository = repository;
         _userManager = userManager;
+        _aiService = aiService;
     }
 
     [AllowAnonymous]
@@ -237,6 +240,25 @@ public class AuctionsController : Controller
         }
         
         return View(auctionToUpdate);
+    }
+        [HttpPost]
+    public async Task<IActionResult> GenerateDescription(List<IFormFile> photos)
+    {
+        if (photos == null || photos.Count == 0)
+        {
+            return BadRequest(new { error = "Nie przesłano żadnych zdjęć." });
+        }
+
+        try
+        {
+            var draft = await _aiService.GenerateFromImagesAsync(photos);
+            
+            return Json(draft);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Błąd generowania AI: " + ex.Message });
+        }
     }
     private async Task<ApplicationUser> GetCurrentUserAsync()
     {
