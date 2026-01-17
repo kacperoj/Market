@@ -11,7 +11,7 @@
         <h1>🛠️ Zarządzanie Użytkownikami</h1>
     </div>
 
-    <div class="card p-3 mb-4 bg-light shadow-sm">
+    <div class="card p-3 mb-4  shadow-sm">
         <form asp-action="Index" method="get" class="row g-3 align-items-end">
             <div class="col-md-5">
                 <label class="form-label fw-bold">Szukaj</label>
@@ -43,7 +43,7 @@
             @foreach (var user in Model.Users)
             {
                 <div class="col-md-12 col-lg-12 mb-4">
-                    <div class="card h-100 shadow-sm @(user.IsBlocked ? "border-danger bg-light" : "border-success")">
+                    <div class="card h-100 shadow-sm @(user.IsBlocked ? "border-danger " : "border-success")">
                         <div class="card-header d-flex justify-content-between align-items-center bg-transparent">
                             <span class="badge @(user.IsBlocked ? "bg-danger" : "bg-success")">
                                 @(user.IsBlocked ? "ZABLOKOWANY" : "AKTYWNY")
@@ -74,15 +74,15 @@
                                     <input type="hidden" name="id" value="@user.Id" />
                                     @if (user.IsBlocked)
                                     {
-                                        <button type="submit" class="btn btn-outline-success w-100 btn-sm">
-                                            🔓 Odblokuj konto
+                                        <button type="submit" class="btn btn-success w-100 btn-sm">
+                                            Odblokuj konto
                                         </button>
                                     }
                                     else
                                     {
-                                        <button type="submit" class="btn btn-outline-danger w-100 btn-sm" 
+                                        <button type="submit" class="btn btn-danger w-100 btn-sm" 
                                                 onclick="return confirm('Czy na pewno chcesz zablokować tego użytkownika?');">
-                                            ⛔ Zablokuj (Soft Delete)
+                                            Zablokuj (Soft Delete)
                                         </button>
                                     }
                                 </form>

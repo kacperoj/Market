@@ -13,7 +13,7 @@
         <a asp-action="Index" class="btn btn-outline-primary">👥 Przełącz na Użytkowników</a>
     </div>
 
-    <div class="card p-3 mb-4 bg-light shadow-sm">
+    <div class="card p-3 mb-4  shadow-sm">
         <form asp-action="Auctions" method="get" class="row g-3 align-items-end">
             <div class="col-md-5">
                 <label class="form-label fw-bold">Szukaj (Tytuł, Opis, Email sprzedawcy)</label>
@@ -57,7 +57,7 @@
                             <small class="text-muted">@auction.CreatedAt.ToShortDateString()</small>
                         </div>
 
-                        <div class="bg-light d-flex align-items-center" style="height: 180px; overflow-x: auto; overflow-y: hidden; white-space: nowrap; border-bottom: 1px solid #eee;">
+                        <div class=" d-flex align-items-center" style="height: 180px; overflow-x: auto; overflow-y: hidden; white-space: nowrap; border-bottom: 1px solid #eee;">
     
                             @if (auction.ImagePaths.Any())
                             {
