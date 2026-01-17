@@ -79,6 +79,10 @@ public class AuctionsController : Controller
 
     public IActionResult Create()
     {
+        var model = new Auction
+        {
+            EndDate = DateTime.Now.AddDays(30) 
+        };
         return View();
     }
 
@@ -93,7 +97,8 @@ public class AuctionsController : Controller
         auction.UserId = user.Id;
         auction.CreatedAt = DateTime.Now;
         auction.AuctionStatus = AuctionStatus.Active;
-
+        auction.Quantity = auction.Quantity;
+        auction.EndDate = auction.EndDate;
         
         ModelState.Remove("UserId");
         ModelState.Remove("User");
@@ -186,6 +191,8 @@ public class AuctionsController : Controller
             auctionToUpdate.Price = auction.Price;
             auctionToUpdate.Category = auction.Category;
             auctionToUpdate.Quantity = auction.Quantity;
+            auctionToUpdate.EndDate = auction.EndDate;
+
 
             if (photos != null && photos.Count > 0)
             {

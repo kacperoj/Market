@@ -50,6 +50,14 @@
                         }
                     </div>
 
+                    <dt class="col-sm-4">Data dodania:</dt>
+                        <dd class="col-sm-8">@Model.CreatedAt.ToShortDateString()</dd>
+
+                        <dt class="col-sm-4">Koniec aukcji:</dt>
+                        <dd class="col-sm-8 text-danger fw-bold">@Model.EndDate.ToString("dd.MM.yyyy HH:mm")</dd>
+
+                        <dt class="col-sm-4">Status:</dt>
+
                     <dl class="row mt-4">
                         <dt class="col-sm-4">Sprzedawca:</dt>
                         <dd class="col-sm-8">@(Model.User?.UserName ?? "Nieznany")</dd>
