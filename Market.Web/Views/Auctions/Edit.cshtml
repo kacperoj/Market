@@ -1,106 +1,88 @@
 @model Market.Web.Models.Auction
+@{ ViewData["Title"] = "Edytuj Aukcję"; }
 
-@{
-    ViewData["Title"] = "Edytuj Aukcję";
-}
+<!-- Używamy stylów z Create -->
+<link rel="stylesheet" href="~/css/auctions-form.css" asp-append-version="true" />
 
-<div class="container mt-4">
-    <h2>Edytuj ogłoszenie</h2>
-    <hr />
-    
-    <div class="row">
-        <div class="col-md-8">
-            <form asp-action="Edit" enctype="multipart/form-data">
-                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                
-                <!-- Ukryte pole ID jest kluczowe przy edycji! -->
-                <input type="hidden" asp-for="Id" />
-
-                <!-- Sekcja: Obecne zdjęcia -->
-                @if (Model.Images != null && Model.Images.Any())
-                {
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Obecne zdjęcia:</label>
-                        <div class="d-flex gap-2 flex-wrap">
-                            @foreach (var img in Model.Images)
-                            {
-                                <div class="position-relative">
-                                    <img src="@img.ImagePath" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;" />
-                                    <!-- Tutaj w przyszłości można dodać przycisk "Usuń" dla pojedynczego zdjęcia -->
-                                </div>
-                            }
-                        </div>
-                    </div>
-                }
-
-                <!-- Sekcja: Dodaj nowe zdjęcia -->
-                <div class="form-group mb-3">
-                    <label class="control-label fw-bold">Dodaj nowe zdjęcia</label>
-                    <input type="file" name="photos" class="form-control" multiple accept="image/*" />
-                    <small class="text-muted">Nowe zdjęcia zostaną dodane do istniejących.</small>
-                </div>
-
-                <div class="form-group mb-3">
-                    <label asp-for="Title" class="control-label fw-bold"></label>
-                    <input asp-for="Title" class="form-control" />
-                    <span asp-validation-for="Title" class="text-danger"></span>
-                </div>
-
-                <div class="form-group mb-3">
-                    <label asp-for="Description" class="control-label fw-bold"></label>
-                    <textarea asp-for="Description" class="form-control" rows="5"></textarea>
-                    <span asp-validation-for="Description" class="text-danger"></span>
-                </div>
-
-                <div class="form-group mb-3">
-                    <label asp-for="Price" class="control-label fw-bold"></label>
-                    <div class="input-group">
-                        <input asp-for="Price" class="form-control" type="number" step="0.01" />
-                        <span class="input-group-text">PLN</span>
-                    </div>
-                    <span asp-validation-for="Price" class="text-danger"></span>
-                </div>
-
-                <div class="form-group mb-3">
-                    <label asp-for="Quantity" class="control-label fw-bold"></label>
-                    <input asp-for="Quantity" class="form-control" type="number" min="1" />
-                    <span asp-validation-for="Quantity" class="text-danger"></span>
-                </div>
-
-                <div class="form-group mb-3">
-                    <label asp-for="EndDate" class="control-label fw-bold"></label>
-                    <input asp-for="EndDate" 
-                           class="form-control" 
-                           type="date" 
-                           min="@DateTime.Today.ToString("dd-MM-yyyy")" 
-                    />
-                    <span asp-validation-for="EndDate" class="text-danger"></span>
-                </div>
-
-                <div class="form-group mb-3">
-                    <label asp-for="Category" class="control-label fw-bold">Kategoria</label>
-                    <select asp-for="Category" class="form-select">
-                        <option value="">-- Wybierz kategorię --</option>
-                        <option value="Elektronika">Elektronika</option>
-                        <option value="Moda">Moda</option>
-                        <option value="Dom i Ogród">Dom i Ogród</option>
-                        <option value="Sport i Hobby">Sport i Hobby</option>
-                        <option value="Motoryzacja">Motoryzacja</option>
-                        <option value="Kultura i Rozrywka">Kultura i Rozrywka</option>
-                        <option value="Inne">Inne</option>
-                    </select>
-                    <span asp-validation-for="Category" class="text-danger"></span>
-                </div>
-
-                <div class="form-group mt-4 d-flex gap-2">
-                    <input type="submit" value="Zapisz zmiany" class="btn btn-primary" />
-                    <a asp-action="Index" class="btn btn-outline-secondary">Anuluj</a>
-                </div>
-            </form>
+<div class="container mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">Edytuj Ofertę</h2>
+            <small class="text-secondary">Zaktualizuj zdjęcia i opis</small>
         </div>
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="bi bi-x-lg"></i> Anuluj
+        </a>
     </div>
+
+    <form asp-action="Edit" enctype="multipart/form-data">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+        <input type="hidden" asp-for="Id" />
+
+        <!-- GALERIA SWIPER (Z widocznym kontenerem jeśli są zdjęcia) -->
+        <div id="galleryContainer" class="@(Model.Images != null && Model.Images.Any() ? "" : "d-none") mb-4">
+            
+            <!-- GŁÓWNY SLIDER -->
+            <div style="--swiper-navigation-color: #fff; --swiper-pagination-color: #fff" class="swiper mySwiper2 rounded border border-secondary mb-2">
+                <div class="swiper-wrapper" id="mainSwiperWrapper">
+                    <!-- PĘTLA GENERUJĄCA ZDJĘCIA Z BAZY -->
+                    @if (Model.Images != null)
+                    {
+                        foreach (var img in Model.Images)
+                        {
+                            <div class="swiper-slide">
+                                <img src="@img.ImagePath" />
+                            </div>
+                        }
+                    }
+                </div>
+                <div class="swiper-button-next"></div>
+                <div class="swiper-button-prev"></div>
+            </div>
+
+            <!-- MINIATURY -->
+            <div thumbsSlider="" class="swiper mySwiper">
+                <div class="swiper-wrapper" id="thumbSwiperWrapper">
+                     @if (Model.Images != null)
+                    {
+                        foreach (var img in Model.Images)
+                        {
+                            <div class="swiper-slide border border-secondary">
+                                <img src="@img.ImagePath" style="object-fit: contain;" />
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- DODAWANIE NOWYCH ZDJĘĆ -->
+        <div class="row g-3 mb-4"> 
+            <div class="col-12">
+                <label class="form-label fw-bold">Zdjęcia przedmiotu</label>
+                <!-- WAŻNE: id="photosInput" pozwala na podpięcie JS -->
+                <input type="file" name="photos" id="photosInput" class="form-control bg-dark text-light border-secondary" multiple accept="image/*" />
+                <div class="form-text text-secondary">
+                    Wybranie nowych plików zastąpi tymczasowo podgląd, ale stare zdjęcia zostaną zachowane na serwerze, dopóki ich nie usuniesz (funkcja todo).
+                </div>
+            </div>
+            <!-- BRAK BUTTONA AI - ZGODNIE Z ŻYCZENIEM -->
+        </div>
+
+        <!-- BAZOWE POLA -->
+        <partial name="_AuctionFormFields" model="Model" />
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <button type="submit" class="btn btn-success btn-lg w-100 py-3 fw-bold">
+                    <i class="bi bi-check-lg"></i> Zapisz zmiany
+                </button>
+            </div>
+        </div>
+    </form>
 </div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script src="~/js/auction-edit.js" asp-append-version="true"></script> 
 }
