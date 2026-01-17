@@ -6,6 +6,7 @@
     var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 }
 
+<link rel="stylesheet" href="~/css/auction-index.css" asp-append-version="true" />
 <h1>Aktualne Aukcje</h1>
 
 <p>
@@ -66,41 +67,100 @@
 </form>
 
 
-<div class="row">
+<div class="d-flex flex-column gap-3">
     @foreach (var item in Model) {
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 shadow-sm position-relative"> 
-               @{
+        <div class="card auction-row-card rounded-3 overflow-hidden position-relative">
+            <div class="row g-0 h-100">
+                
+                @{
                     var indexImage = item.Images != null && item.Images.Any() 
                                     ? item.Images.First().ImagePath 
-                                    : "https://via.placeholder.com/300";
+                                    : "https://via.placeholder.com/300x220?text=Brak+Zdjecia";
                 }
-                
-                <img src="@indexImage" 
-                     class="card-img-top" alt="@item.Title"
-                     style="height: 200px; object-fit: cover;" />
-                
-                <div class="card-body">
-                    <h5 class="card-title">
-                        <a asp-action="Details" asp-route-id="@item.Id" class="stretched-link text-decoration-none">
-                            @item.Title
-                        </a>
-                    </h5>
-                    <h6 class="card-subtitle mb-2 text-muted">@item.Price.ToString("C")</h6>
-                    <p class="card-text text-truncate">@item.Description</p>
-                    <small class="text-muted">Sprzedawca: @(item.User?.Email ?? "Nieznany")</small>
+
+                <!-- 1. LEWA STRONA: ZDJĘCIE (col-md-3 lub 4 w zależności od preferencji) -->
+                <div class="col-md-4 col-xl-3">
+                    <div class="auction-img-container h-100">
+                        <!-- Obrazek -->
+                        <img src="@indexImage" class="w-100 h-100 object-fit-cover" alt="@item.Title" />
+                        
+                        <!-- Przycisk Edycji (Dla właściciela) -->
+                         @if (currentUserId != null && item.UserId == currentUserId)
+                        {
+                            <a asp-action="Edit" asp-route-id="@item.Id" 
+                               class="btn btn-sm btn-floating-edit rounded-circle p-2 shadow"
+                               title="Edytuj ofertę">
+                               <i class="bi bi-pencil-fill px-1"></i>
+                            </a>
+                        }
+
+                        <!-- Badge Kategorii na zdjęciu -->
+                        <span class="badge bg-black bg-opacity-75 position-absolute bottom-0 start-0 m-2 border border-secondary">
+                            @item.Category
+                        </span>
+                    </div>
                 </div>
 
-                @if (currentUserId != null && item.UserId == currentUserId)
-                {
-                    <div class="card-footer border-top-0">
-                        <a asp-action="Edit" asp-route-id="@item.Id" 
-                           class="btn btn-primary btn-sm w-100" 
-                           style="position: relative; z-index: 2;">
-                           Edytuj
-                        </a>
+                <!-- 2. ŚRODEK I PRAWA STRONA -->
+                <div class="col-md-8 col-xl-9">
+                    <div class="card-body h-100 d-flex flex-column flex-md-row">
+                        
+                        <!-- ŚRODEK: TREŚĆ (Flex fill rozpycha) -->
+                        <div class="flex-grow-1 pe-md-4">
+                            <!-- Link jest rozciągnięty na całość, ale z niższym z-index niż przyciski -->
+                            <h4 class="card-title fw-bold mb-2">
+                                <a asp-action="Details" asp-route-id="@item.Id" class="text-reset text-decoration-none stretched-link">
+                                    @item.Title
+                                </a>
+                            </h4>
+
+                            <!-- Parametry (Atrybuty w stylu Allegro) -->
+                            <div class="mb-3 text-secondary small d-flex flex-wrap gap-3">
+                                <span><i class="bi bi-tag me-1"></i> @item.Category</span>
+                                @if (item.Quantity > 0)
+                                {
+                                    <span><i class="bi bi-box-seam me-1"></i> Dostępne: @item.Quantity szt.</span>
+                                }
+                                else
+                                {
+                                    <span class="text-danger"><i class="bi bi-x-circle me-1"></i> Sprzedane</span>
+                                }
+                                <span><i class="bi bi-clock me-1"></i> Koniec: @item.EndDate.ToShortDateString()</span>
+                            </div>
+
+                            <!-- Opis -->
+                            <p class="card-text text-secondary text-truncate-3 mb-0">
+                                @item.Description
+                            </p>
+                        </div>
+
+                        <!-- PRAWA STRONA: CENA I STOPKA -->
+                        <div class="price-section ps-md-3 border-start-md border-secondary border-opacity-25">
+                            
+                            <!-- Cena -->
+                            <div class="text-md-end mb-3">
+                                <h3 class="text-warning fw-bolder mb-0">@item.Price.ToString("N2") <small class="fs-6 text-muted">PLN</small></h3>
+                                <small class="text-muted d-block mt-1">
+                                    @if(item.Price > 1000) { <span class="badge bg-success bg-opacity-10 text-success border border-success">Raty 0%</span> }
+                                    else {  }
+                                </small>
+                            </div>
+
+                            <!-- Info o sprzedawcy i dacie -->
+                            <div class="mt-auto text-md-end text-secondary small">
+                                <div class="mb-1">
+                                    <i class="bi bi-person me-1"></i> @(item.User?.UserName ?? "użytkownik")
+                                </div>
+                                <div>
+                                    <i class="bi bi-calendar3 me-1"></i> Dodano: @item.CreatedAt.ToString("dd.MM.yyyy")
+                                </div>
+                            </div>
+
+                        </div>
+
                     </div>
-                }
+                </div>
+
             </div>
         </div>
     }
