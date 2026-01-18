@@ -1,0 +1,174 @@
+@model Market.Web.ViewModels.EditProfileViewModel
+
+@{
+    ViewData["Title"] = "Edycja Profilu";
+}
+
+<div class="container mt-4 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-person-gear me-2"></i> Edycja Profilu</h2>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">Anuluj</a>
+            </div>
+
+            <form asp-action="EditProfile" method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-3"></div>
+
+                <!-- SEKCJA 1: DANE PRYWATNE -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary bg-opacity-10">
+                        <h5 class="mb-0 text-primary">1. Dane Osobiste i Dostawa</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label fw-bold">Adres E-mail</label>
+                            <input asp-for="Email" class="form-control" readonly />
+                            <small class="text-muted">Zmiana adresu e-mail wymaga osobnego procesu weryfikacji.</small>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="FirstName" class="form-label fw-bold"></label>
+                                <input asp-for="FirstName" class="form-control" />
+                                <span asp-validation-for="FirstName" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="LastName" class="form-label fw-bold"></label>
+                                <input asp-for="LastName" class="form-control" />
+                                <span asp-validation-for="LastName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <h6 class="mt-4 mb-3 border-bottom pb-2">Adres Dostawy</h6>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label asp-for="ShippingAddress.Street" class="form-label"></label>
+                                <input asp-for="ShippingAddress.Street" class="form-control" placeholder="Ulica i numer" />
+                                <span asp-validation-for="ShippingAddress.Street" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="ShippingAddress.PostalCode" class="form-label"></label>
+                                <input asp-for="ShippingAddress.PostalCode" class="form-control" placeholder="00-000" />
+                                <span asp-validation-for="ShippingAddress.PostalCode" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="ShippingAddress.City" class="form-label"></label>
+                                <input asp-for="ShippingAddress.City" class="form-control" />
+                                <span asp-validation-for="ShippingAddress.City" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="ShippingAddress.Country" class="form-label"></label>
+                                <input asp-for="ShippingAddress.Country" class="form-control" value="Polska" />
+                                <span asp-validation-for="ShippingAddress.Country" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEKCJA 2: IBAN -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-secondary bg-opacity-10">
+                        <h5 class="mb-0">2. Płatności (Dla Sprzedających)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label asp-for="PrivateIBAN" class="form-label fw-bold"></label>
+                            <input asp-for="PrivateIBAN" class="form-control" placeholder="PL..." />
+                            <div class="form-text">Podanie numeru konta jest opcjonalne, ale konieczne do otrzymywania wpłat za sprzedane przedmioty.</div>
+                            <span asp-validation-for="PrivateIBAN" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEKCJA 3: DANE FIRMY -->
+                <div class="card shadow-sm mb-4 border-warning">
+                    <div class="card-header bg-warning bg-opacity-10 d-flex align-items-center">
+                        <div class="form-check form-switch m-0">
+                            <input class="form-check-input" type="checkbox" asp-for="HasCompanyProfile" id="toggleCompany">
+                            <label class="form-check-label fw-bold text-dark" for="toggleCompany">
+                                3. Dane Firmowe (Opcjonalne)
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Kontener ukrywany JS -->
+                    <div class="card-body" id="companySection" style="display: none;">
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label asp-for="CompanyName" class="form-label fw-bold">Nazwa Firmy</label>
+                                <input asp-for="CompanyName" class="form-control" />
+                                <span asp-validation-for="CompanyName" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="NIP" class="form-label fw-bold">NIP</label>
+                                <input asp-for="NIP" class="form-control" placeholder="Bez kresek" />
+                                <span asp-validation-for="NIP" class="text-danger"></span>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="CompanyIBAN" class="form-label fw-bold">Firmowy Numer Konta</label>
+                                <input asp-for="CompanyIBAN" class="form-control" />
+                                <span asp-validation-for="CompanyIBAN" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <h6 class="mt-4 mb-3 border-bottom pb-2">Adres Siedziby / Rozliczeniowy</h6>
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label asp-for="InvoiceAddress.Street" class="form-label"></label>
+                                <input asp-for="InvoiceAddress.Street" class="form-control" placeholder="Ulica i numer" />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="InvoiceAddress.PostalCode" class="form-label"></label>
+                                <input asp-for="InvoiceAddress.PostalCode" class="form-control" placeholder="00-000" />
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="InvoiceAddress.City" class="form-label"></label>
+                                <input asp-for="InvoiceAddress.City" class="form-control" />
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="InvoiceAddress.Country" class="form-label"></label>
+                                <input asp-for="InvoiceAddress.Country" class="form-control" value="Polska" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg fw-bold py-3">
+                        <i class="bi bi-save me-2"></i> Zapisz Zmiany
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const toggle = document.getElementById("toggleCompany");
+            const section = document.getElementById("companySection");
+            const inputs = section.querySelectorAll("input");
+
+            function updateVisibility() {
+                if (toggle.checked) {
+                    section.style.display = "block";
+                    // Ewentualnie przywracamy 'required' jeśli używamy HTML5 validation
+                } else {
+                    section.style.display = "none";
+                }
+            }
+
+            // Init state
+            updateVisibility();
+
+            // Change event
+            toggle.addEventListener("change", updateVisibility);
+        });
+    </script>
+}

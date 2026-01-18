@@ -6,6 +6,7 @@ using Market.Web.Data;
 using Market.Web.Models;
 using Market.Web.Repositories;
 using Market.Web.Services;
+using Market.Web.Authorization;
 
 namespace Market.Web.Controllers;
 
@@ -62,7 +63,7 @@ public class AuctionsController : Controller
         return View(query.ToList());
     }
 
-    [AllowAnonymous]
+    [Buyer]
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null)
@@ -79,7 +80,7 @@ public class AuctionsController : Controller
 
         return View(auction);
     }
-
+    [Seller]
     public IActionResult Create()
     {
         var model = new Auction
@@ -89,7 +90,7 @@ public class AuctionsController : Controller
         return View(model);
     }
 
-
+    [Seller]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(Auction auction, List<IFormFile> photos)
@@ -146,6 +147,7 @@ public class AuctionsController : Controller
         
         return View(auction);
     }
+    [Seller]
     public async Task<IActionResult> Edit(int? id) // Poprawiłem literówkę iActionResult -> IActionResult
     {
         if (id == null)
@@ -168,6 +170,7 @@ public class AuctionsController : Controller
 
         return View(auction);
     }
+    [Seller]
     [HttpPost]
     [ValidateAntiForgeryToken]
 

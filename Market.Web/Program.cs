@@ -4,6 +4,8 @@ using Market.Web.Data;
 using Market.Web.Models;
 using Market.Web.Repositories;
 using Market.Web.Services;
+using Market.Web.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
