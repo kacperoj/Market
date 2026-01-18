@@ -141,8 +141,10 @@
                             <div class="text-md-end mb-3">
                                 <h3 class="text-warning fw-bolder mb-0">@item.Price.ToString("N2") <small class="fs-6 text-muted">PLN</small></h3>
                                 <small class="text-muted d-block mt-1">
-                                    @if(item.Price > 1000) { <span class="badge bg-success bg-opacity-10 text-success border border-success">Raty 0%</span> }
-                                    else {  }
+                                    @if(item.GeneratedByAi)
+                                    {
+                                        <span class="badge bg-info bg-opacity-10 text-info border border-info mb-2">Opis wygenerowany przez AI</span>
+                                    }
                                 </small>
                             </div>
 

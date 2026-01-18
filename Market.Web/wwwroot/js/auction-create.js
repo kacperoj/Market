@@ -111,7 +111,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (data.title) document.getElementById("Title").value = data.title;
                 if (data.description) document.getElementById("Description").value = data.description;
                 if (data.suggestedPrice) document.getElementById("Price").value = data.suggestedPrice;
-
+                alert(generatedByAiValue.value);
+                generatedByAiValue.value = "true";
+                alert(generatedByAiValue.value);
                 if (data.category) {
                     const categorySelect = document.getElementById("Category");
                     let options = Array.from(categorySelect.options);
@@ -129,4 +131,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
+   
 });

@@ -9,6 +9,8 @@
         <span asp-validation-for="Title" class="text-danger"></span>
     </div>
 
+    <input type="hidden" asp-for="GeneratedByAi" id="generatedByAiValue"/>
+
     <div class="col-md-6">
         <div class="form-floating">
             <select asp-for="Category" class="form-select">

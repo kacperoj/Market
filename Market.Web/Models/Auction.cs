@@ -30,6 +30,7 @@ public class Auction
     public DateTime CreatedAt { get; set; } = DateTime.Now;
     public DateTime EndDate { get; set; }
 
+    public bool GeneratedByAi { get; set; } = false;
     public AuctionStatus AuctionStatus { get; set; }
 
     public string? BannedNote { get; set; }

@@ -127,6 +127,12 @@
 
             <div class="col-md-12 p-4">
                 <h3>Opis produktu:</h3>
+                @if(Model.GeneratedByAi)
+                {
+                    <span class="badge bg-info bg-opacity-10 text-info border border-info mb-2">Opis wygenerowany przez AI</span>
+                }
+
+
                 <p class="card-text">@Model.Description</p>
             </div>
         </div>
