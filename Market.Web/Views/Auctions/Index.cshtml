@@ -83,16 +83,6 @@
                     <div class="auction-img-container h-100">
                         <!-- Obrazek -->
                         <img src="@indexImage" class="w-100 h-100 object-fit-cover" alt="@item.Title" />
-                        
-                        <!-- Przycisk Edycji (Dla właściciela) -->
-                         @if (currentUserId != null && item.UserId == currentUserId)
-                        {
-                            <a asp-action="Edit" asp-route-id="@item.Id" 
-                               class="btn btn-sm btn-floating-edit rounded-circle p-2 shadow"
-                               title="Edytuj ofertę">
-                               <i class="bi bi-pencil-fill px-1"></i>
-                            </a>
-                        }
 
                         <!-- Badge Kategorii na zdjęciu -->
                         <span class="badge bg-black bg-opacity-75 position-absolute bottom-0 start-0 m-2 border border-secondary">
@@ -156,6 +146,16 @@
                                 <div>
                                     <i class="bi bi-calendar3 me-1"></i> Dodano: @item.CreatedAt.ToString("dd.MM.yyyy")
                                 </div>
+                                <!-- Przycisk Edycji (Dla właściciela) -->
+                                @if (currentUserId != null && item.UserId == currentUserId)
+                                {
+                                    <a asp-action="Edit" asp-route-id="@item.Id" 
+                                   class="btn btn-outline-secondary btn-sm mt-2 position-relative"
+                                   style="z-index: 2;"
+                                   title="Edytuj ofertę">
+                                    Edytuj
+                                    </a>
+                                }
                             </div>
 
                         </div>
