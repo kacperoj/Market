@@ -133,11 +133,31 @@ public class AdminService : IAdminService
                 Title = a.Title,
                 Price = a.Price,
                 Category = a.Category,
-                SellerEmail = a.User != null ? a.User.Email : "Nieznany",
                 Status = a.AuctionStatus,
                 CreatedAt = a.CreatedAt,
                 BannedNote = a.BannedNote,
-                ImagePaths = a.Images.Select(img => img.ImagePath).ToList()
+                
+                // Mapowanie nowych pól:
+                EndDate = a.EndDate,
+                Quantity = a.Quantity,
+                IsCompanySale = a.IsCompanySale,
+                GeneratedByAi = a.GeneratedByAi,
+                
+                // Pobieranie obrazka
+                ImagePaths = a.Images.Select(img => img.ImagePath).ToList(),
+
+                // Dane sprzedawcy (Email + Nazwa wyświetlana)
+                SellerEmail = a.User != null ? a.User.Email : "Nieznany",
+                SellerDisplayName = a.User != null 
+                    ? (a.User.UserProfile != null && a.User.UserProfile.CompanyProfile != null 
+                        ? a.User.UserProfile.CompanyProfile.CompanyName // Jeśli firma, pokaż nazwę firmy
+                        : (a.User.UserProfile != null ? $"{a.User.UserProfile.FirstName} {a.User.UserProfile.LastName}" : a.User.UserName)) 
+                    : "Brak danych",
+
+                // Skracanie opisu do max 100 znaków
+                ShortDescription = a.Description.Length > 100 
+                    ? a.Description.Substring(0, 100) + "..." 
+                    : a.Description
             })
             .ToListAsync();
 
