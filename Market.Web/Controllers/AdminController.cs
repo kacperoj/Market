@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Market.Web.Services;
+using Market.Web.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace Market.Web.Controllers;
 
@@ -9,9 +11,11 @@ public class AdminController : Controller
 {
     private readonly IAdminService _adminService;
 
-    public AdminController(IAdminService adminService)
+    private readonly UserManager<ApplicationUser> _userManager;
+    public AdminController(IAdminService adminService, UserManager<ApplicationUser> userManager)
     {
         _adminService = adminService;
+        _userManager = userManager;
     }
 
     public async Task<IActionResult> Index(string searchString, string sortOrder, int pageNumber = 1)
@@ -23,11 +27,35 @@ public class AdminController : Controller
         return View(model);
     }
 
-    [HttpPost]
+        [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ToggleBlockUser(string id)
+    public async Task<IActionResult> ToggleBlockUser(string id, string reason) 
     {
-        await _adminService.ToggleUserBlockStatusAsync(id);
+        var user = await _userManager.FindByIdAsync(id);
+        if (user == null) return NotFound();
+
+        if (user.IsBlocked)
+        {
+            await _userManager.SetLockoutEndDateAsync(user, null);
+
+            user.IsBlocked = false;  
+            user.BlockReason = null; 
+            
+            await _userManager.UpdateAsync(user);
+            TempData["Success"] = "Użytkownik został odblokowany.";
+        }
+        else
+        {
+            await _userManager.SetLockoutEnabledAsync(user, true); 
+            await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
+            
+            user.IsBlocked = true;   
+            user.BlockReason = string.IsNullOrEmpty(reason) ? "Naruszenie regulaminu" : reason;
+            
+            await _userManager.UpdateAsync(user);
+            TempData["Success"] = "Użytkownik został zablokowany.";
+        }
+
         return RedirectToAction(nameof(Index));
     }
 

@@ -56,9 +56,24 @@ public class AdminService : IAdminService
                 Email = u.Email,
                 IsBlocked = u.IsBlocked,
                 FullName = u.UserProfile != null ? $"{u.UserProfile.FirstName} {u.UserProfile.LastName}" : "Brak profilu",
-                CompanyName = u.UserProfile != null && u.UserProfile.CompanyProfile != null ? u.UserProfile.CompanyProfile.CompanyName : "-",
-                NIP = u.UserProfile != null && u.UserProfile.CompanyProfile != null ? u.UserProfile.CompanyProfile.NIP : "-",
-                AuctionCount = _context.Auctions.Count(a => a.UserId == u.Id) 
+                AuctionCount = _context.Auctions.Count(a => a.UserId == u.Id),
+
+                PhoneNumber = u.PhoneNumber,
+                EmailConfirmed = u.EmailConfirmed,
+
+                PrivateIBAN = u.UserProfile != null ? u.UserProfile.PrivateIBAN : null,
+                AddressStreet = u.UserProfile != null && u.UserProfile.ShippingAddress != null ? u.UserProfile.ShippingAddress.Street : "",
+                AddressCity = u.UserProfile != null && u.UserProfile.ShippingAddress != null ? u.UserProfile.ShippingAddress.City : "",
+                AddressPostalCode = u.UserProfile != null && u.UserProfile.ShippingAddress != null ? u.UserProfile.ShippingAddress.PostalCode : "",
+
+                HasCompany = u.UserProfile != null && u.UserProfile.CompanyProfile != null,
+                CompanyName = u.UserProfile != null && u.UserProfile.CompanyProfile != null ? u.UserProfile.CompanyProfile.CompanyName : "",
+                NIP = u.UserProfile != null && u.UserProfile.CompanyProfile != null ? u.UserProfile.CompanyProfile.NIP : "",
+                CompanyIBAN = u.UserProfile != null && u.UserProfile.CompanyProfile != null ? u.UserProfile.CompanyProfile.CompanyIBAN : null,
+                
+                CompanyAddress = (u.UserProfile != null && u.UserProfile.CompanyProfile != null && u.UserProfile.CompanyProfile.InvoiceAddress != null)
+                    ? $"{u.UserProfile.CompanyProfile.InvoiceAddress.Street}, {u.UserProfile.CompanyProfile.InvoiceAddress.PostalCode} {u.UserProfile.CompanyProfile.InvoiceAddress.City}"
+                    : ""
             })
             .ToListAsync();
 
