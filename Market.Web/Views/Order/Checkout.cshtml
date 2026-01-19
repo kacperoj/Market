@@ -11,7 +11,7 @@
 
             <!-- 1. PRZEDMIOT ZAKUPU -->
             <div class="card shadow-sm mb-4">
-                <div class="card-header bg-light fw-bold">1. Przedmiot zakupu</div>
+                <div class="card-header fw-bold">1. Przedmiot zakupu</div>
                 <div class="card-body">
                     <div class="d-flex gap-3 align-items-center">
                         <!-- Wyświetlanie zdjęcia -->
@@ -49,7 +49,7 @@
 
                 <!-- 2. ADRES DOSTAWY -->
                 <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-light fw-bold">2. Adres dostawy</div>
+                    <div class="card-header fw-bold">2. Adres dostawy</div>
                     <div class="card-body">
                         <div class="d-flex align-items-start">
                             <i class="bi bi-geo-alt fs-4 me-3 text-secondary"></i>
@@ -66,10 +66,10 @@
                 <!-- 3. DANE DO FAKTURY -->
                 <div class="card shadow-sm mb-4 border-warning">
                     <div class="card-header bg-warning bg-opacity-10 d-flex justify-content-between align-items-center">
-                        <span class="fw-bold text-dark">3. Dane do faktury (Opcjonalne)</span>
+                        <span class="fw-bold">3. Dane do faktury (Opcjonalne)</span>
                     </div>
                     
-                    <div class="card-body bg-light">
+                    <div class="card-body">
                         <div class="form-check ms-1">
                             <input class="form-check-input" type="checkbox" asp-for="WantsInvoice" id="invoiceCheck" 
                                    disabled="@(!Model.BuyerHasCompanyProfile ? "disabled" : null)">
@@ -106,7 +106,7 @@
                         <button type="submit" class="btn btn-success btn-lg py-3 fw-bold shadow-sm">
                             <i class="bi bi-bag-check-fill me-2"></i> Potwierdzam zakup i płacę
                         </button>
-                        <a asp-controller="Auctions" asp-action="Details" asp-route-id="@Model.AuctionId" class="btn btn-outline-secondary">
+                        <a asp-controller="Auctions" asp-action="Details" asp-route-id="@Model.AuctionId" class="btn btn-secondary">
                             Anuluj i wróć do aukcji
                         </a>
                     </div>
@@ -132,7 +132,6 @@
 
                 checkbox.addEventListener('change', toggleDetails);
                 
-                // Stan początkowy (np. po cofnięciu w przeglądarce lub walidacji)
                 toggleDetails();
             }
         });
