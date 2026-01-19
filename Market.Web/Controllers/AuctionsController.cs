@@ -16,91 +16,58 @@ public class AuctionsController : Controller
     private readonly IAuctionRepository _repository;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IADescriptionService _aiService;
-    private readonly Market.Web.Data.ApplicationDbContext _context; 
+    private readonly IAuctionProcessingService _processingService; // NOWE
+    private readonly ApplicationDbContext _context; // Można usunąć, jeśli przeniesiemy sprawdzanie firmy do serwisu, ale na razie zostawmy dla Create
 
-    public AuctionsController(IAuctionRepository repository, UserManager<ApplicationUser> userManager, IADescriptionService aiService, Market.Web.Data.ApplicationDbContext context)
+    public AuctionsController(IAuctionRepository repository, 
+                              UserManager<ApplicationUser> userManager, 
+                              IADescriptionService aiService, 
+                              IAuctionProcessingService processingService, // Wstrzykujemy nowy serwis
+                              ApplicationDbContext context)
     {
         _repository = repository;
         _userManager = userManager;
         _aiService = aiService;
+        _processingService = processingService;
         _context = context;
     }
 
     [AllowAnonymous]
     public async Task<IActionResult> Index(string? searchString, string? category, decimal? minPrice, decimal? maxPrice, string? sortOrder)
     {
-
         var auctions = await _repository.GetAllAsync();
-
         IEnumerable<Auction> query = auctions;
 
         if (!string.IsNullOrEmpty(searchString))
-        {
-            query = query.Where(s => s.Title.Contains(searchString, StringComparison.OrdinalIgnoreCase) 
-                                  || s.Description.Contains(searchString, StringComparison.OrdinalIgnoreCase));
-        }
+            query = query.Where(s => s.Title.Contains(searchString, StringComparison.OrdinalIgnoreCase) || s.Description.Contains(searchString, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrEmpty(category)) query = query.Where(x => x.Category == category);
+        if (minPrice.HasValue) query = query.Where(x => x.Price >= minPrice.Value);
+        if (maxPrice.HasValue) query = query.Where(x => x.Price <= maxPrice.Value);
 
-        if (!string.IsNullOrEmpty(category))
-        {
-            query = query.Where(x => x.Category == category);
-        }
-
-        if (minPrice.HasValue)
-        {
-            query = query.Where(x => x.Price >= minPrice.Value);
-        }
-
-        if (maxPrice.HasValue)
-        {
-            query = query.Where(x => x.Price <= maxPrice.Value);
-        }
-
-        query = sortOrder switch
-        {
+        query = sortOrder switch {
             "price_desc" => query.OrderByDescending(s => s.Price),
             "price_asc" => query.OrderBy(s => s.Price),
-            _ => query.OrderByDescending(s => s.CreatedAt), // Domyślne: od najnowszych
+            _ => query.OrderByDescending(s => s.CreatedAt),
         };
-
         return View(query.ToList());
     }
 
     [Buyer]
     public async Task<IActionResult> Details(int? id)
     {
-        if (id == null)
-        {
-            return NotFound();
-        }
-
+        if (id == null) return NotFound();
         var auction = await _repository.GetByIdAsync(id.Value);
-
-        if (auction == null)
-        {
-            return NotFound();
-        }
-
-        return View(auction);
+        return auction == null ? NotFound() : View(auction);
     }
+
     [Seller]
     public async Task<IActionResult> Create()
     {
         var user = await GetCurrentUserAsync();
-        
-        bool hasCompanyProfile = false;
-        if (user != null)
-        {
-             hasCompanyProfile = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.AnyAsync(
-                _context.CompanyProfiles, cp => cp.UserProfile.UserId == user.Id);
-        }
-
+        bool hasCompanyProfile = user != null && await _context.CompanyProfiles.AnyAsync(cp => cp.UserProfile.UserId == user.Id);
         ViewBag.CanSellAsCompany = hasCompanyProfile;
 
-        var model = new Auction
-        {
-            EndDate = DateTime.Now.AddDays(30) 
-        };
-        return View(model);
+        return View(new Auction { EndDate = DateTime.Now.AddDays(30) });
     }
 
     [Seller]
@@ -114,97 +81,49 @@ public class AuctionsController : Controller
         auction.UserId = user.Id;
         auction.CreatedAt = DateTime.Now;
         auction.AuctionStatus = AuctionStatus.Active;
-        auction.Quantity = auction.Quantity;
 
         if (auction.EndDate <= DateTime.Now)
-            ModelState.AddModelError("EndDate", "Data zakończenia aukcji musi być późniejsza niż dzisiejsza.");
-        else
-            auction.EndDate = auction.EndDate;
-        
-        ModelState.Remove("UserId");
-        ModelState.Remove("User");
-        ModelState.Remove("Images"); 
+             ModelState.AddModelError("EndDate", "Nieprawidłowa data.");
+
+        ModelState.Remove("UserId"); ModelState.Remove("User"); ModelState.Remove("Images"); 
 
         if (ModelState.IsValid)
         {
-            if (photos != null && photos.Count > 0)
-            {
-                foreach (var photo in photos)
-                {
-                    if (photo.Length > 0)
-                    {
-                        var fileName = Guid.NewGuid().ToString() + Path.GetExtension(photo.FileName);
-                        
-                        var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
-                        
-                        if (!Directory.Exists(uploadDir)) Directory.CreateDirectory(uploadDir);
-
-                        var filePath = Path.Combine(uploadDir, fileName);
-
-                        using (var stream = new FileStream(filePath, FileMode.Create))
-                        {
-                            await photo.CopyToAsync(stream);
-                        }
-                        auction.Images.Add(new AuctionImage 
-                        { 
-                            ImagePath = "/uploads/" + fileName 
-                        });
-                    }
-                }
-            }
+            auction.Images = await _processingService.ProcessUploadedImagesAsync(photos);
 
             await _repository.AddAsync(auction);
             await _repository.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
-        
         return View(auction);
     }
+ 
     [Seller]
-    public async Task<IActionResult> Edit(int? id) // Poprawiłem literówkę iActionResult -> IActionResult
+    public async Task<IActionResult> Edit(int? id)
     {
-        if (id == null)
-        {
-            return NotFound();
-        }
-
+        if (id == null) return NotFound();
         var auction = await _repository.GetByIdAsync(id.Value);
-        if (auction == null)
-        {
-            return NotFound();
-        }
+        if (auction == null) return NotFound();
 
-        // SPRAWDZENIE BEZPIECZEŃSTWA: Czy edytujący to właściciel?
         var user = await GetCurrentUserAsync();
-        if (user == null || auction.UserId != user.Id)
-        {
-            return Forbid(); // Zwraca brak dostępu
-        }
+        if (user == null || auction.UserId != user.Id) return Forbid();
 
         return View(auction);
     }
+
     [Seller]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, Auction auction, List<IFormFile> photos)
     {
-        if (id != auction.Id)
-        {
-            return NotFound();
-        }
+        if (id != auction.Id) return NotFound();
         var auctionToUpdate = await _repository.GetByIdAsync(id);
-        
         if (auctionToUpdate == null) return NotFound();
 
         var user = await GetCurrentUserAsync();
-        if (user == null || auctionToUpdate.UserId != user.Id)
-        {
-            return Forbid();
-        }
+        if (user == null || auctionToUpdate.UserId != user.Id) return Forbid();
 
-        ModelState.Remove("UserId");
-        ModelState.Remove("User");
-        ModelState.Remove("Images");
+        ModelState.Remove("UserId"); ModelState.Remove("User"); ModelState.Remove("Images");
 
         if (ModelState.IsValid)
         {
@@ -213,49 +132,19 @@ public class AuctionsController : Controller
             auctionToUpdate.Price = auction.Price;
             auctionToUpdate.Category = auction.Category;
             auctionToUpdate.Quantity = auction.Quantity;
+            
+            if (auction.EndDate > DateTime.Now) auctionToUpdate.EndDate = auction.EndDate;
 
-            if (auction.EndDate <= DateTime.Now)
-            {
-                ModelState.AddModelError("EndDate", "Data zakończenia aukcji musi być późniejsza niż dzisiejsza.");
-                return View(auctionToUpdate); 
-            }
-            else
-                auctionToUpdate.EndDate = auction.EndDate;
-
-            if (photos != null && photos.Count > 0)
-            {
-                foreach (var photo in photos)
-                {
-                    if (photo.Length > 0)
-                    {
-                        var fileName = Guid.NewGuid().ToString() + Path.GetExtension(photo.FileName);
-                        var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
-                        if (!Directory.Exists(uploadDir)) Directory.CreateDirectory(uploadDir);
-                        var filePath = Path.Combine(uploadDir, fileName);
-
-                        using (var stream = new FileStream(filePath, FileMode.Create))
-                        {
-                            await photo.CopyToAsync(stream);
-                        }
-
-                        if (auctionToUpdate.Images == null) 
-                            auctionToUpdate.Images = new List<AuctionImage>();
-                            
-                        auctionToUpdate.Images.Add(new AuctionImage 
-                        { 
-                            ImagePath = "/uploads/" + fileName 
-                        });
-                    }
-                }
-            }
+            var newImages = await _processingService.ProcessUploadedImagesAsync(photos);
+            if (auctionToUpdate.Images == null) auctionToUpdate.Images = new List<AuctionImage>();
+            foreach(var img in newImages) auctionToUpdate.Images.Add(img);
 
             await _repository.SaveChangesAsync();
-            
             return RedirectToAction(nameof(Index));
         }
-        
         return View(auctionToUpdate);
     }
+
     [Seller]
     [Authorize]
     public async Task<IActionResult> MyAuctions()
@@ -263,36 +152,24 @@ public class AuctionsController : Controller
         var user = await GetCurrentUserAsync();
         if (user == null) return Challenge();
 
-        var myAuctions = await _context.Auctions
-            .Include(a => a.Images) // Potrzebne do miniaturek
-            .Where(a => a.UserId == user.Id)
-            .OrderByDescending(a => a.CreatedAt) // Najnowsze na górze
-            .ToListAsync();
+        var model = await _processingService.GetUserAuctionsViewModelAsync(user.Id);
 
-        return View(myAuctions);
+        return View(model);
     }
+
     [HttpPost]
     public async Task<IActionResult> GenerateDescription(List<IFormFile> photos)
     {
-        if (photos == null || photos.Count == 0)
-        {
-            return BadRequest(new { error = "Nie przesłano żadnych zdjęć." });
-        }
-
+        if (photos == null || photos.Count == 0) return BadRequest(new { error = "Brak zdjęć." });
         try
         {
-            var draft = await _aiService.GenerateFromImagesAsync(photos);
-            
-            return Json(draft);
+            return Json(await _aiService.GenerateFromImagesAsync(photos));
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { error = "Błąd generowania AI: " + ex.Message });
+            return StatusCode(500, new { error = "Błąd AI: " + ex.Message });
         }
     }
-    private async Task<ApplicationUser> GetCurrentUserAsync()
-    {
-        var user = await _userManager.GetUserAsync(User);
-        return user;
-    }
+
+    private async Task<ApplicationUser> GetCurrentUserAsync() => await _userManager.GetUserAsync(User);
 }

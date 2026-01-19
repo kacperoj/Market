@@ -26,6 +26,8 @@ builder.Services.AddScoped<Market.Web.Services.IAdminService, Market.Web.Service
 
 builder.Services.AddHttpClient<IADescriptionService, OpenRouterAiService>();
 
+builder.Services.AddScoped<IAuctionProcessingService, AuctionProcessingService>(); 
+
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
