@@ -156,5 +156,39 @@ namespace Market.Web.Controllers
 
             return View(model);
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> WithdrawFunds()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Challenge();
+            
+            var userProfile = await _context.UserProfiles
+                .FirstOrDefaultAsync(p => p.UserId == user.Id);
+
+            if (userProfile == null) return NotFound();
+
+            if (string.IsNullOrEmpty(userProfile.PrivateIBAN))
+            {
+                TempData["Error"] = "Brak numeru konta IBAN. Uzupełnij profil.";
+                return RedirectToAction(nameof(MyFinances));
+            }
+
+            if (userProfile.WalletBalance <= 0)
+            {
+                TempData["Error"] = "Brak środków do wypłaty.";
+                return RedirectToAction(nameof(MyFinances));
+            }
+
+            decimal amountToWithdraw = userProfile.WalletBalance;
+            
+            userProfile.WalletBalance = 0;
+            
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = $"Zlecono wypłatę {amountToWithdraw:N2} PLN na konto {userProfile.PrivateIBAN}.";
+            return RedirectToAction(nameof(MyFinances));
+        }
     }
 }

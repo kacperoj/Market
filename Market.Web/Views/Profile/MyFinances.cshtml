@@ -17,12 +17,14 @@
                         @Model.AvailableFunds.ToString("N2") <small class="fs-4">PLN</small>
                     </div>
                     <p class="text-muted small">Środki z zakończonych transakcji, gotowe do wypłaty.</p>
-                    
+
                     @if (Model.AvailableFunds > 0 && Model.HasIBAN)
                     {
-                        <button class="btn btn-success rounded-pill px-4 fw-bold">
-                            <i class="bi bi-bank me-2"></i>Wypłać na konto
-                        </button>
+                        <form asp-action="WithdrawFunds" method="post" onsubmit="return confirm('Czy na pewno chcesz zlecić wypłatę wszystkich środków?');">
+                            <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm">
+                                <i class="bi bi-bank me-2"></i>Wypłać na konto
+                            </button>
+                        </form>
                         
                     }
                     else if (!Model.HasIBAN)
