@@ -25,8 +25,6 @@ public class Auction
     [Required(ErrorMessage = "Kategoria jest wymagana.")]
     public string Category { get; set; } = string.Empty;
     
-    public ICollection<AuctionImage> Images { get; set; } = new List<AuctionImage>();
-
     public DateTime CreatedAt { get; set; } = DateTime.Now;
     public DateTime EndDate { get; set; }
 
@@ -39,4 +37,8 @@ public class Auction
 
     public string? UserId { get; set; }
     public ApplicationUser? User { get; set; }
+
+    public ICollection<AuctionImage> Images { get; set; } = new List<AuctionImage>();
+
+    public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 }

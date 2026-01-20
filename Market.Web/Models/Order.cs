@@ -31,7 +31,9 @@ namespace Market.Web.Models
 
         public string? BuyerCompanyName { get; set; }
         public string? BuyerNIP { get; set; }
-        public string? BuyerInvoiceAddress { get; set; } // Zapiszemy jako jeden ciąg lub JSON dla uproszczenia
+        public string? BuyerInvoiceAddress { get; set; } 
+        
+        public virtual Opinion? Opinion { get; set; }
     }
 
     public enum OrderStatus

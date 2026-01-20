@@ -133,7 +133,8 @@ namespace Market.Web.Controllers
                 .Include(o => o.Auction)
                     .ThenInclude(a => a.Images)
                 .Include(o => o.Auction)
-                    .ThenInclude(a => a.User) // Aby pobrać nazwę sprzedawcy
+                    .ThenInclude(a => a.User)
+                .Include(o => o.Opinion) 
                 .Where(o => o.BuyerId == user.Id)
                 .OrderByDescending(o => o.OrderDate)
                 .Select(o => new MyOrderViewModel
@@ -147,7 +148,10 @@ namespace Market.Web.Controllers
                     AuctionId = o.AuctionId,
                     AuctionTitle = o.Auction != null ? o.Auction.Title : "Oferta usunięta",
                     SellerName = o.Auction != null && o.Auction.User != null ? o.Auction.User.UserName : "Nieznany",
-                    
+
+                    HasOpinion = o.Opinion != null,
+                    MyRating = o.Opinion != null ? o.Opinion.Rating : 0,
+
                     ImageUrl = o.Auction != null && o.Auction.Images.Any() 
                         ? o.Auction.Images.First().ImagePath 
                         : "https://via.placeholder.com/150"
@@ -155,6 +159,76 @@ namespace Market.Web.Controllers
                 .ToListAsync();
 
             return View(orders);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Rate(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Challenge();
+
+            var order = await _context.Orders
+                .Include(o => o.Auction)
+                    .ThenInclude(a => a.User)
+                .Include(o => o.Auction)
+                    .ThenInclude(a => a.Images)
+                .Include(o => o.Opinion) // Ważne: sprawdzamy czy już jest opinia
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+            if (order == null) return NotFound();
+
+            if (order.BuyerId != user.Id) return Forbid();
+
+            if (order.Status == OrderStatus.Pending) 
+                return BadRequest("Nie możesz ocenić nieopłaconego zamówienia.");
+
+            if (order.Opinion != null)
+                return BadRequest("To zamówienie zostało już ocenione.");
+
+            var model = new RateOrderViewModel
+            {
+                OrderId = order.Id,
+                AuctionTitle = order.Auction?.Title ?? "Przedmiot usunięty",
+                SellerName = order.Auction?.User?.UserName ?? "Nieznany",
+                ImageUrl = order.Auction?.Images?.FirstOrDefault()?.ImagePath ?? "https://via.placeholder.com/150"
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Rate(RateOrderViewModel model)
+        {
+            if (!ModelState.IsValid) return View(model);
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Challenge();
+
+            var order = await _context.Orders
+                .Include(o => o.Auction) // Potrzebne ID sprzedawcy
+                .Include(o => o.Opinion)
+                .FirstOrDefaultAsync(o => o.Id == model.OrderId);
+
+            if (order == null || order.BuyerId != user.Id) return Forbid();
+            if (order.Opinion != null) return BadRequest("Już oceniono.");
+            if (order.Auction == null) return BadRequest("Nie można ocenić (aukcja nie istnieje).");
+
+            var opinion = new Opinion
+            {
+                OrderId = order.Id,
+                BuyerId = user.Id,
+                SellerId = order.Auction.UserId,
+                Comment = model.Comment,
+                Rating = model.Rating,
+                CreatedAt = DateTime.Now
+            };
+
+            _context.Opinions.Add(opinion);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Dziękujemy! Twoja opinia została dodana.";
+            return RedirectToAction(nameof(MyOrders));
         }
 
         public IActionResult OrderConfirmation(int id)

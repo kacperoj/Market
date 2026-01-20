@@ -46,50 +46,73 @@ public class AuctionProcessingService : IAuctionProcessingService
     {
         var auctions = await _context.Auctions
             .Include(a => a.Images)
+            .Include(a => a.Orders)
+                .ThenInclude(o => o.Opinion)
+                    .ThenInclude(op => op.Buyer)
             .Where(a => a.UserId == userId)
             .OrderByDescending(a => a.CreatedAt)
             .ToListAsync();
 
-        return auctions.Select(a => new MyAuctionViewModel
+        return auctions.Select(a => 
         {
-            Id = a.Id,
-            Title = a.Title,
-            Description = a.Description,
-            Price = a.Price,
-            Category = a.Category,
-            Quantity = a.Quantity,
-            IsCompanySale = a.IsCompanySale,
-            GeneratedByAi = a.GeneratedByAi,
-            
-            CreatedAtFormatted = a.CreatedAt.ToShortDateString(),
-            EndDateFormatted = a.EndDate.ToShortDateString(),
-            IsExpired = a.EndDate < DateTime.Now,
+            var opinionsList = a.Orders
+                .Where(o => o.Opinion != null)
+                .Select(o => new OpinionDetailViewModel 
+                {
+                    BuyerName = o.Opinion!.Buyer != null ? o.Opinion.Buyer.UserName : "Anonim",
+                    Rating = o.Opinion.Rating,
+                    Comment = o.Opinion.Comment,
+                    DateFormatted = o.Opinion.CreatedAt.ToString("dd.MM.yyyy")
+                })
+                .ToList();
 
-            ImageUrl = a.Images != null && a.Images.Any() 
-                ? a.Images.First().ImagePath 
-                : "https://via.placeholder.com/300x220?text=Brak+Zdjecia",
+            return new MyAuctionViewModel
+            {
+                Id = a.Id,
+                Title = a.Title,
+                Description = a.Description,
+                Price = a.Price,
+                Category = a.Category,
+                Quantity = a.Quantity,
+                IsCompanySale = a.IsCompanySale,
+                GeneratedByAi = a.GeneratedByAi,
+                
+                CreatedAtFormatted = a.CreatedAt.ToShortDateString(),
+                EndDateFormatted = a.EndDate.ToShortDateString(),
+                IsExpired = a.EndDate < DateTime.Now,
 
-             StatusBadgeClass = a.AuctionStatus switch
-            {
-                AuctionStatus.Active => "bg-success",
-                AuctionStatus.Banned => "bg-danger",
-                AuctionStatus.Suspended => "bg-danger",
-                AuctionStatus.Draft => "bg-secondary",
-                AuctionStatus.Sold => "bg-dark",
-                _ => "bg-primary"
-            },
-            StatusLabel = a.AuctionStatus switch
-            {
-                AuctionStatus.Active => "AKTYWNA",
-                AuctionStatus.Banned => "ZABLOKOWANA",
-                AuctionStatus.Suspended => "ZAWIESZONA",
-                AuctionStatus.Draft => "SZKIC",
-                AuctionStatus.Sold => "SPRZEDANA",
-                _ => a.AuctionStatus.ToString().ToUpper()
-            },
-            
-            IsBannedOrSuspended = a.AuctionStatus == AuctionStatus.Banned || a.AuctionStatus == AuctionStatus.Suspended,
-            BannedNote = a.BannedNote
+                IsBannedOrSuspended = a.AuctionStatus == AuctionStatus.Banned || a.AuctionStatus == AuctionStatus.Suspended,
+                BannedNote = a.BannedNote,
+
+                StatusBadgeClass = a.AuctionStatus switch
+                {
+                    AuctionStatus.Active => "bg-success",   // Zielony
+                    AuctionStatus.Banned => "bg-danger",    // Czerwony
+                    AuctionStatus.Suspended => "bg-danger", // Czerwony
+                    AuctionStatus.Draft => "bg-secondary",  // Szary
+                    AuctionStatus.Sold => "bg-dark",        // Czarny
+                    AuctionStatus.Expired => "bg-secondary", // Wygasła
+                    _ => "bg-primary"                       // Domyślny
+                },
+
+                // 2. Tekst statusu (PL)
+                StatusLabel = a.AuctionStatus switch
+                {
+                    AuctionStatus.Active => "AKTYWNA",
+                    AuctionStatus.Banned => "ZABLOKOWANA",
+                    AuctionStatus.Suspended => "ZAWIESZONA",
+                    AuctionStatus.Draft => "SZKIC",
+                    AuctionStatus.Sold => "SPRZEDANA",
+                    AuctionStatus.Expired => "WYGASŁA",
+                    _ => a.AuctionStatus.ToString().ToUpper()
+                },  
+
+                ImageUrl = a.Images != null && a.Images.Any() 
+                    ? a.Images.First().ImagePath 
+                    : "https://via.placeholder.com/300x220?text=Brak+Zdjecia",
+
+                Opinions = opinionsList
+            };
         }).ToList();
     }
 }

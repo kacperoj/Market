@@ -16,5 +16,8 @@ namespace Market.Web.ViewModels
         public bool IsCompanyPurchase { get; set; }
 
         public string SellerName { get; set; } = string.Empty;
+
+        public bool HasOpinion { get; set; }
+        public int MyRating { get; set; }
     }
 }

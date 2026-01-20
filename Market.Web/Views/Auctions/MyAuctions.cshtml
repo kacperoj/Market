@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="~/css/auction-index.css" asp-append-version="true" />
 
 <div class="container mt-4 mb-5">
-    
+
     <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
         <div>
             <h1 class="fw-bold mb-0">Moje Oferty</h1>
@@ -30,7 +30,7 @@
             {
                 <div class="card auction-row-card rounded-3 overflow-hidden position-relative shadow-sm border-0">
                     <div class="row g-0 h-100">
-
+                        
                         <div class="col-md-4 col-xl-3">
                             <div class="auction-img-container h-100 position-relative">
                                 <img src="@item.ImageUrl" class="w-100 h-100 object-fit-cover" alt="@item.Title" />
@@ -45,67 +45,98 @@
                         </div>
 
                         <div class="col-md-8 col-xl-9">
-                            <div class="card-body h-100 d-flex flex-column flex-md-row">
-                                <div class="flex-grow-1 pe-md-4">
-                                    <h4 class="card-title fw-bold mb-2">
-                                        <a asp-action="Details" asp-route-id="@item.Id" class="text-reset text-decoration-none stretched-link">
-                                            @item.Title
-                                        </a>
-                                    </h4>
+                            <div class="card-body h-100 d-flex flex-column p-4">
+                                <div class="d-flex flex-column flex-md-row justify-content-between h-100">
+                                    
 
-                                    <div class="mb-3 text-secondary small d-flex flex-wrap gap-3">
-                                        @if (!item.IsSoldOut)
-                                        {
-                                            <span><i class="bi bi-box-seam me-1"></i> Dostępne: @item.Quantity szt.</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-danger fw-bold">Sprzedane</span>
-                                        }
-                                        
-                                        <span class="@(item.IsExpired ? "text-danger fw-bold" : "")">
-                                            Koniec: @item.EndDateFormatted
-                                        </span>
+                                    <div class="flex-grow-1 pe-md-4">
+                                        <h4 class="card-title fw-bold mb-2">
+                                            <a asp-action="Details" asp-route-id="@item.Id" class="text-reset text-decoration-none">
+                                                @item.Title
+                                            </a>
+                                        </h4>
 
-                                        @if(item.IsCompanySale)
-                                        {
-                                            <span class="text-primary fw-bold"><i class="bi bi-receipt me-1"></i>Faktura VAT</span>
-                                        }
-                                    </div>
+                                        <div class="mb-3 text-secondary small d-flex flex-wrap gap-3">
+                                            @if (!item.IsSoldOut)
+                                            {
+                                                <span><i class="bi bi-box-seam me-1"></i> Dostępne: @item.Quantity szt.</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-danger fw-bold">Sprzedane</span>
+                                            }
+                                            
+                                            <span class="@(item.IsExpired ? "text-danger fw-bold" : "")">
+                                                Koniec: @item.EndDateFormatted
+                                            </span>
 
-                                    <p class="card-text text-secondary text-truncate-3 mb-0">
-                                        @item.Description
-                                    </p>
-
-                                    @if(item.IsBannedOrSuspended && !string.IsNullOrEmpty(item.BannedNote))
-                                    {
-                                        <div class="alert alert-danger py-2 px-3 small shadow-sm border-0 bg-danger bg-opacity-10 text-danger mb-2 mt-3 position-relative" style="z-index: 2;">
-                                            <strong>ZABLOKOWANA:</strong> @item.BannedNote
+                                            @if(item.IsCompanySale)
+                                            {
+                                                <span class="text-primary fw-bold"><i class="bi bi-receipt me-1"></i>Faktura VAT</span>
+                                            }
                                         </div>
-                                    }
-                                </div>
 
-                                <div class="price-section ps-md-3 border-start-md d-flex flex-column justify-content-between" style="min-width: 200px;">
-                                    <div class="text-md-end mb-3">
-                                        <h3 class="text-warning fw-bolder mb-0">@item.Price.ToString("N2") <small class="fs-6 text-muted">PLN</small></h3>
-                                        @if(item.GeneratedByAi)
+                                        <p class="card-text text-secondary text-truncate-3 mb-0">
+                                            @item.Description
+                                        </p>
+
+                                        @if(item.IsBannedOrSuspended && !string.IsNullOrEmpty(item.BannedNote))
                                         {
-                                            <small class="badge bg-info bg-opacity-10 text-info border border-info mt-1">Opis AI</small>
+                                            <div class="alert alert-danger py-2 px-3 small shadow-sm border-0 bg-danger bg-opacity-10 text-danger mb-2 mt-3">
+                                                <strong>ZABLOKOWANA:</strong> @item.BannedNote
+                                            </div>
                                         }
                                     </div>
 
-                                    <div class="d-grid gap-2 mt-auto text-end">
-                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary btn-sm fw-bold position-relative" style="z-index: 2;">
-                                            <i class="bi bi-pencil-square me-1"></i> Edytuj
-                                        </a>
-                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-secondary btn-sm position-relative" style="z-index: 2;">
-                                            Podgląd
-                                        </a>
-                                        <span class="text-muted x-small mt-2">Utworzono: @item.CreatedAtFormatted</span>
+                                    <div class="price-section ps-md-3 border-start-md d-flex flex-column justify-content-between mt-3 mt-md-0" style="min-width: 200px;">
+                                        
+                                        <div class="text-md-end mb-3">
+                                            <h3 class="text-warning fw-bolder mb-0">@item.Price.ToString("N2") <small class="fs-6 text-muted">PLN</small></h3>
+                                            
+                                            @if(item.OpinionsCount > 0)
+                                            {
+                                                <div class="mt-1">
+                                                    <button class="btn btn-sm btn-link text-decoration-none p-0 border-0 bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#opinions-@item.Id" aria-expanded="false">
+                                                        
+                                                        <div class="mt-1">
+                                                            <small class="badge bg-opacity-10 text-warning mt-1 d-inline-block">Pokaż opinie</small>
+                                                            <span class="text-warning fw-bold">
+                                                                @item.AverageRating.ToString("0.0") <i class="bi bi-star-fill"></i>
+                                                            </span>
+                                                            <span class="ms-1 small text-muted">(@item.OpinionsCount opinii)</span>
+                                                        </div>
+                                                    </button>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="mt-1 small text-muted opacity-50">Brak opinii</div>
+                                            }
+                                            
+                                            @if(item.GeneratedByAi)
+                                            {
+                                                <small class="badge bg-info bg-opacity-10 text-info border border-info mt-1 d-inline-block">Opis AI</small>
+                                            }
+                                        </div>
+
+                                        <div class="d-grid gap-2 mt-auto text-end">
+                                            
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary btn-sm fw-bold">
+                                                <i class="bi bi-pencil-square me-1"></i> Edytuj
+                                            </a>
+                                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-secondary btn-sm">
+                                                Podgląd
+                                            </a>
+                                            <span class="text-muted x-small mt-2">Utworzono: @item.CreatedAtFormatted</span>
+                                        </div>
                                     </div>
                                 </div>
+
+                                @await Html.PartialAsync("_AuctionOpinions", item.Opinions, new ViewDataDictionary(ViewData) { { "AuctionId", item.Id } })
+
                             </div>
                         </div>
+
                     </div>
                 </div>
             }
