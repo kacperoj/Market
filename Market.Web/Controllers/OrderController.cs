@@ -161,6 +161,102 @@ namespace Market.Web.Controllers
             return View(orders);
         }
 
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> MySales()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Challenge();
+
+            var sales = await _context.Orders
+                .Include(o => o.Auction)
+                .Include(o => o.Buyer) 
+                    .ThenInclude(b => b.UserProfile)
+                .Where(o => o.Auction.UserId == user.Id)
+                .OrderByDescending(o => o.OrderDate)
+                .Select(o => new MySaleViewModel
+                {
+                    OrderId = o.Id,
+                    OrderDate = o.OrderDate,
+                    TotalPrice = o.TotalPrice,
+                    Status = o.Status,
+                    AuctionId = o.AuctionId,
+                    AuctionTitle = o.Auction.Title,
+                    
+                    BuyerName = o.Buyer.UserName, 
+                    BuyerEmail = o.Buyer.Email,
+
+                    IsCompanyPurchase = o.IsCompanyPurchase,
+                    ShippingAddressString = o.Buyer.UserProfile != null && o.Buyer.UserProfile.ShippingAddress != null
+                        ? $"{o.Buyer.UserProfile.ShippingAddress.Street}, {o.Buyer.UserProfile.ShippingAddress.PostalCode} {o.Buyer.UserProfile.ShippingAddress.City}"
+                        : "Brak danych adresowych",
+                    
+                    InvoiceDataString = o.IsCompanyPurchase 
+                        ? $"{o.BuyerCompanyName} (NIP: {o.BuyerNIP})\n{o.BuyerInvoiceAddress}" 
+                        : null
+                })
+                .ToListAsync();
+
+            return View(sales);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateOrderStatus(int orderId, OrderStatus newStatus)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Challenge();
+
+            var order = await _context.Orders
+                .Include(o => o.Auction)
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null) return NotFound();
+
+            if (order.Auction.UserId != user.Id)
+            {
+                return Forbid();
+            }
+
+            order.Status = newStatus;
+            
+            await _context.SaveChangesAsync();
+            
+            TempData["SuccessMessage"] = $"Zmieniono status zamówienia #{order.Id} na {newStatus}.";
+            return RedirectToAction(nameof(MySales));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConfirmDelivery(int orderId)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Challenge();
+
+            var order = await _context.Orders
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null) return NotFound();
+
+            if (order.BuyerId != user.Id)
+            {
+                return Forbid();
+            }
+
+            if (order.Status != OrderStatus.Shipped)
+            {
+                 TempData["Error"] = "Nie możesz potwierdzić odbioru dla tego statusu zamówienia.";
+                 return RedirectToAction(nameof(MyOrders));
+            }
+
+            order.Status = OrderStatus.Completed;
+            
+            await _context.SaveChangesAsync();
+            
+            TempData["SuccessMessage"] = "Potwierdzono odbiór zamówienia. Dziękujemy!";
+            return RedirectToAction(nameof(MyOrders));
+        }
+
         [HttpGet]
         public async Task<IActionResult> Rate(int id)
         {
