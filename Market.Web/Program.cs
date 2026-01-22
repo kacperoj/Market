@@ -4,49 +4,40 @@ using Market.Web.Data;
 using Market.Web.Models;
 using Market.Web.Repositories;
 using Market.Web.Services;
-using Market.Web.Authorization;
-using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(connectionString));
+// 1. Konfiguracja bazy danych
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseSqlite(connectionString));
+}
+else
+{
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseNpgsql(connectionString));
+}
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
-builder.Services.AddControllersWithViews();
 
+// Rejestracja serwisów
+builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IAuctionRepository, AuctionRepository>();
-
 builder.Services.AddScoped<Market.Web.Services.IAdminService, Market.Web.Services.AdminService>(); 
-
 builder.Services.AddHttpClient<IADescriptionService, OpenRouterAiService>();
-
 builder.Services.AddScoped<IAuctionProcessingService, AuctionProcessingService>(); 
-
-builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    try
-    {
-        await Market.Web.Data.DbSeeder.SeedRolesAndAdminAsync(services);
-    }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Wystąpił błąd podczas seedowania bazy danych.");
-    }
-}
-
-// Configure the HTTP request pipeline.
+// 2. Pipeline HTTP
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
@@ -54,7 +45,6 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -69,5 +59,34 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
+
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<ApplicationDbContext>();
+    var logger = services.GetRequiredService<ILogger<Program>>();
+
+    try 
+    {
+        if (app.Environment.IsDevelopment())
+        {
+            await DbSeeder.SeedRolesAndAdminAsync(services);
+        }
+        else
+        {
+
+            logger.LogInformation("Próba inicjalizacji bazy danych PostgreSQL...");
+            context.Database.EnsureCreated();
+            logger.LogInformation("Baza danych gotowa. Uruchamianie seedera...");
+            await DbSeeder.SeedRolesAndAdminAsync(services);
+            logger.LogInformation("Seedowanie zakończone.");
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Błąd krytyczny podczas inicjalizacji bazy danych.");
+    }
+}
 
 app.Run();
