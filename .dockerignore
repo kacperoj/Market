@@ -1,0 +1,14 @@
+**/.dockerignore
+**/.env
+**/.git
+**/.vs
+**/.vscode
+**/.idea
+**/bin
+**/obj
+**/*.db
+**/*.db-shm
+**/*.db-wal
+**/TestResult.xml
+**/ScaffoldingReadMe.txt
+**/Dockerfile
