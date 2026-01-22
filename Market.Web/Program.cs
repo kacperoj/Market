@@ -5,8 +5,13 @@ using Market.Web.Models;
 using Market.Web.Repositories;
 using Market.Web.Services;
 
+// FIX: To jest kluczowe dla Postgresa przy pracy z DateTime.Now.
+// Bez tego aplikacja wyrzuci błąd przy zapisie daty rejestracji aukcji.
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
+// Pobieranie Connection Stringa (zmienna środowiskowa Coolify ma priorytet)
 var envConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
 var configConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
@@ -15,21 +20,26 @@ var connectionString = !string.IsNullOrEmpty(envConnectionString)
     : configConnectionString 
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-// 2. Wybór bazy danych (Inteligentny)
-// Zamiast pytać o Environment, sprawdzamy czy connection string wygląda na Postgresa (ma "Host=")
-// Dzięki temu możesz mieć tryb Development na Coolify i używać Postgresa
-if (connectionString.Contains("Host=", StringComparison.OrdinalIgnoreCase) || 
-    connectionString.Contains("postgres", StringComparison.OrdinalIgnoreCase))
+// Wykrywamy typ bazy na podstawie struktury Connection Stringa
+bool isPostgres = connectionString.Contains("Host=", StringComparison.OrdinalIgnoreCase) || 
+                  connectionString.Contains("postgres", StringComparison.OrdinalIgnoreCase);
+
+// 1. Konfiguracja DbContext
+if (isPostgres)
 {
-    // PostgreSQL
+    // Produkcja (Coolify) - PostgreSQL
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseNpgsql(connectionString));
+    
+    Console.WriteLine("--> Używanie bazy PostgreSQL");
 }
 else
 {
-    // SQLite (lokalnie)
+    // Lokalnie - SQLite
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseSqlite(connectionString));
+        
+    Console.WriteLine("--> Używanie bazy SQLite");
 }
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
@@ -38,7 +48,6 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.R
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
-// Rejestracja serwisów
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IAuctionRepository, AuctionRepository>();
 builder.Services.AddScoped<Market.Web.Services.IAdminService, Market.Web.Services.AdminService>(); 
@@ -47,7 +56,7 @@ builder.Services.AddScoped<IAuctionProcessingService, AuctionProcessingService>(
 
 var app = builder.Build();
 
-// 2. Pipeline HTTP
+// Konfiguracja potoku HTTP
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
@@ -63,13 +72,13 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication(); 
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
-
 
 using (var scope = app.Services.CreateScope())
 {
@@ -79,23 +88,24 @@ using (var scope = app.Services.CreateScope())
 
     try 
     {
-        if (app.Environment.IsDevelopment())
+        bool dbIsPostgres = context.Database.ProviderName?.Contains("PostgreSQL") ?? false;
+
+        if (dbIsPostgres)
         {
-            await DbSeeder.SeedRolesAndAdminAsync(services);
+            logger.LogInformation("Wykryto Postgres. Rozpoczynam migrację struktur bazy danych...");
+            
+            await context.Database.MigrateAsync();
         }
         else
         {
 
-            logger.LogInformation("Próba inicjalizacji bazy danych PostgreSQL...");
-            context.Database.EnsureCreated();
-            logger.LogInformation("Baza danych gotowa. Uruchamianie seedera...");
-            await DbSeeder.SeedRolesAndAdminAsync(services);
-            logger.LogInformation("Seedowanie zakończone.");
         }
+        await DbSeeder.SeedRolesAndAdminAsync(services);
+        logger.LogInformation("Baza danych gotowa.");
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "Błąd krytyczny podczas inicjalizacji bazy danych.");
+        logger.LogError(ex, "Wystąpił błąd podczas inicjalizacji/migracji bazy danych.");
     }
 }
 
