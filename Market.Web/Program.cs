@@ -7,19 +7,29 @@ using Market.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Konfiguracja bazy danych
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+var envConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+var configConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+var connectionString = !string.IsNullOrEmpty(envConnectionString) 
+    ? envConnectionString 
+    : configConnectionString 
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-if (builder.Environment.IsDevelopment())
+// 2. Wybór bazy danych (Inteligentny)
+// Zamiast pytać o Environment, sprawdzamy czy connection string wygląda na Postgresa (ma "Host=")
+// Dzięki temu możesz mieć tryb Development na Coolify i używać Postgresa
+if (connectionString.Contains("Host=", StringComparison.OrdinalIgnoreCase) || 
+    connectionString.Contains("postgres", StringComparison.OrdinalIgnoreCase))
 {
+    // PostgreSQL
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseSqlite(connectionString));
+        options.UseNpgsql(connectionString));
 }
 else
 {
+    // SQLite (lokalnie)
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseNpgsql(connectionString));
+        options.UseSqlite(connectionString));
 }
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
