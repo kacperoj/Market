@@ -8,7 +8,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Market.Web.Migrations
+namespace Market.Web.Data.Migrations.Postgres
 {
     [DbContext(typeof(ApplicationDbContext))]
     partial class ApplicationDbContextModelSnapshot : ModelSnapshot
@@ -111,14 +111,14 @@ namespace Market.Web.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("EndDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<bool>("GeneratedByAi")
                         .HasColumnType("boolean");
@@ -218,7 +218,7 @@ namespace Market.Web.Migrations
                         .HasColumnType("character varying(1000)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("OrderId")
                         .HasColumnType("integer");
@@ -270,7 +270,7 @@ namespace Market.Web.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<DateTime>("OrderDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");

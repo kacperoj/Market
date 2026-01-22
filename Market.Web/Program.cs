@@ -92,8 +92,11 @@ using (var scope = app.Services.CreateScope())
 
         if (dbIsPostgres)
         {
-            logger.LogInformation("Wykryto Postgres. Rozpoczynam migrację struktur bazy danych...");
-            
+            logger.LogInformation("Wykryto Postgres. Rozpoczynam migrację...");
+
+            logger.LogWarning("!!! CZYSZCZENIE BAZY DANYCH (EnsureDeleted) !!!");
+            await context.Database.EnsureDeletedAsync(); 
+
             await context.Database.MigrateAsync();
         }
         else
