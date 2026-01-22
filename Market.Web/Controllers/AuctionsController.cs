@@ -37,10 +37,13 @@ public class AuctionsController : Controller
     public async Task<IActionResult> Index(string? searchString, string? category, decimal? minPrice, decimal? maxPrice, string? sortOrder)
     {
         var auctions = await _repository.GetAllAsync();
-        IEnumerable<Auction> query = auctions;
+
+        IEnumerable<Auction> query = auctions
+            .Where(a => a.AuctionStatus == AuctionStatus.Active && a.EndDate > DateTime.Now);
 
         if (!string.IsNullOrEmpty(searchString))
             query = query.Where(s => s.Title.Contains(searchString, StringComparison.OrdinalIgnoreCase) || s.Description.Contains(searchString, StringComparison.OrdinalIgnoreCase));
+        
         if (!string.IsNullOrEmpty(category)) query = query.Where(x => x.Category == category);
         if (minPrice.HasValue) query = query.Where(x => x.Price >= minPrice.Value);
         if (maxPrice.HasValue) query = query.Where(x => x.Price <= maxPrice.Value);
