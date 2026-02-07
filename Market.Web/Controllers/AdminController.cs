@@ -27,7 +27,7 @@ public class AdminController : Controller
         return View(model);
     }
 
-        [HttpPost]
+    [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ToggleBlockUser(string id, string reason) 
     {
@@ -36,23 +36,24 @@ public class AdminController : Controller
 
         if (user.IsBlocked)
         {
-            await _userManager.SetLockoutEndDateAsync(user, null);
-
             user.IsBlocked = false;  
             user.BlockReason = null; 
+
+            user.LockoutEnd = null;
+            user.AccessFailedCount = 0;
             
             await _userManager.UpdateAsync(user);
             TempData["Success"] = "Użytkownik został odblokowany.";
         }
         else
         {
-            await _userManager.SetLockoutEnabledAsync(user, true); 
-            await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
+            user.LockoutEnabled = true; 
+            user.LockoutEnd = DateTimeOffset.MaxValue;
             
             user.IsBlocked = true;   
             user.BlockReason = string.IsNullOrEmpty(reason) ? "Naruszenie regulaminu" : reason;
             
-            await _userManager.UpdateAsync(user);
+            await _userManager.UpdateSecurityStampAsync(user);
             TempData["Success"] = "Użytkownik został zablokowany.";
         }
 
