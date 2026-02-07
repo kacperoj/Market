@@ -10,13 +10,15 @@ services:
       - "5005:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=postgres-db;Database=market_db;Username=postgres;Password=postgres
       - ASPNETCORE_HTTP_PORTS=8080
-      # Wymuszamy providera Postgres w kontenerze (jeśli dodałeś tę logikę do Program.cs)
-      - DatabaseProvider=Postgres 
+      - DatabaseProvider=Postgres
+      - ConnectionStrings__DefaultConnection=Host=postgres-db;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      - OpenRouter__ApiKey=${OPENROUTER_API_KEY}
+      - OpenRouter__Model=${OPENROUTER_MODEL}
+
     depends_on:
       postgres-db:
-        condition: service_healthy # <--- CZEKAMY AŻ BAZA BĘDZIE ZDROWA
+        condition: service_healthy
     volumes:
       - ./market_uploads:/app/wwwroot/uploads
 
@@ -24,16 +26,15 @@ services:
     image: postgres:15
     container_name: market-postgres
     environment:
-      - POSTGRES_DB=market_db
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    # SPRAWDZANIE CZY BAZA JUŻ WSTAŁA:
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 5s
       timeout: 5s
       retries: 5
