@@ -1,0 +1,77 @@
+﻿@page
+@model RegisterModel
+@{
+    ViewData["Title"] = "Rejestracja";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            
+            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <h3 class="fw-bold mb-0">Rejestracja</h3>
+                    <p class="mb-0 opacity-75">Utwórz nowe konto</p>
+                </div>
+                
+                <div class="card-body p-4 p-md-5">
+                    <section>
+                        <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+
+                            <div class="mb-0"> <!-- Zmiana z mb-0 na mb-3 dla odstępu -->
+                                <label asp-for="Input.Email" class="form-label text-secondary fw-bold small">Adres e-mail</label>
+                                <input asp-for="Input.Email" class="form-control form-control-lg rounded-3" autocomplete="username" aria-required="true" placeholder="jankowalski@wp.pl" />
+                                <span asp-validation-for="Input.Email" class="text-danger small ps-1"></span>
+                            </div>
+        
+                           <div class="mb-0"> <!-- Zmiana z mb-0 na mb-3 -->
+                                <label asp-for="Input.Password" class="form-label text-secondary fw-bold small">Hasło </label>
+                                <input asp-for="Input.Password" class="form-control form-control-lg rounded-3" autocomplete="new-password" aria-required="true" placeholder="*************" />
+                                <span asp-validation-for="Input.Password" class="text-danger small ps-1"></span>
+                            </div>
+
+                            <div class="mb-4">
+                                <label asp-for="Input.ConfirmPassword" class="form-label text-secondary fw-bold small">Potwierdź hasło </label>
+                                <input asp-for="Input.ConfirmPassword" class="form-control form-control-lg rounded-3" autocomplete="new-password" aria-required="true" placeholder="*************" />
+                                <span asp-validation-for="Input.ConfirmPassword" class="text-danger small ps-1"></span>
+                            </div>
+
+                            <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary rounded-pill fw-bold mb-3 shadow-sm">Rejestracja</button>
+                            
+                            <div class="text-center mt-3">
+                                <span class="text-muted small">Masz już konto?</span>
+                                <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl" class="text-decoration-none fw-bold ms-1">Zaloguj się</a>
+                            </div>
+                        </form>
+                    </section>
+
+                    @if ((Model.ExternalLogins?.Count ?? 0) > 0)
+                    {
+                        <div class="position-relative my-4">
+                            <hr class="text-muted opacity-25">
+                            <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 small text-muted">LUB</span>
+                        </div>
+
+                        <section>
+                            <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="text-center">
+                                <div class="d-grid gap-2">
+                                    @foreach (var provider in Model.ExternalLogins!)
+                                    {
+                                        <button type="submit" class="btn btn-outline-secondary rounded-pill" name="provider" value="@provider.Name" title="Zaloguj używając konta @provider.DisplayName">
+                                            <i class="bi bi-box-arrow-in-right me-2"></i>Kontynuuj przez @provider.DisplayName
+                                        </button>
+                                    }
+                                </div>
+                            </form>
+                        </section>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
