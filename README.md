@@ -38,7 +38,13 @@ User management and content blocking (Soft Delete).
 
 <img width="1920" height="1440" alt="822shots_so" src="https://github.com/user-attachments/assets/2f5ae7cf-9185-4a3c-97ef-783e1b76db4c" />
 
----
+### 4. Checkout Process
+A seamless checkout flow. The system validates shipping details and redirects users to a secure payment gateway (Stripe Hosted Page), handling real-time transaction status updates.
+
+<img width="1920" height="1440" alt="560shots_so" src="https://github.com/user-attachments/assets/17095d8f-cb88-49cf-82e2-9ad5d3b73ce4" />
+<img width="1920" height="1440" alt="715shots_so" src="https://github.com/user-attachments/assets/3e0c27c1-8d96-4da6-aa8f-240d054669d4" />
+
+
 
 ## 🚀 Key Features & Architecture
 
