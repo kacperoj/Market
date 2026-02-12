@@ -3,6 +3,7 @@ using Market.Web.Core.DTOs;
 using Microsoft.EntityFrameworkCore;
 using Market.Web.Core.ViewModels;
 using Market.Web.Core.Models;
+using Market.Web.ViewModels;
 
 namespace Market.Web.Services;
 

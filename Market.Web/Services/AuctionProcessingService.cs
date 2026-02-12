@@ -1,24 +1,20 @@
-using Market.Web.Persistence.Data;
 using Market.Web.Core.Models;
 using Market.Web.Core.ViewModels;
-using Microsoft.EntityFrameworkCore;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Formats.Webp;
 using Market.Web.Repositories;
-using Market.Web.Services;
-using Market.Web.Core.ViewModels;
 
 namespace Market.Web.Services;
 
 public class AuctionProcessingService : IAuctionProcessingService
 {
-    private readonly IAuctionRepository _auctionRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IWebHostEnvironment _webHostEnvironment;
 
-    public AuctionProcessingService(IAuctionRepository auctionRepository, IWebHostEnvironment webHostEnvironment)
+    public AuctionProcessingService(IUnitOfWork unitOfWork, IWebHostEnvironment webHostEnvironment)
     {
-        _auctionRepository = auctionRepository;
+        _unitOfWork = unitOfWork;
         _webHostEnvironment = webHostEnvironment;
     }
 
@@ -69,7 +65,7 @@ public class AuctionProcessingService : IAuctionProcessingService
 
     public async Task<List<MyAuctionViewModel>> GetUserAuctionsViewModelAsync(string userId)
     {
-        var auctions = await _auctionRepository.GetUserAuctionsAsync(userId);
+        var auctions = await _unitOfWork.Auctions.GetUserAuctionsAsync(userId);
 
 
         return auctions.Select(a => 

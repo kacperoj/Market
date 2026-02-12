@@ -1,5 +1,6 @@
 using Market.Web.Core.DTOs;
 using Market.Web.Core.ViewModels;
+using Market.Web.ViewModels;
 
 namespace Market.Web.Services;
 

@@ -1,22 +1,26 @@
-using Microsoft.AspNetCore.Identity;
-using Market.Web.Core.Models;
-using Market.Web.Repositories;
+using Market.Web.Persistence.Data; // Dla ApplicationDbContext
+using Market.Web.Repositories;     // Dla interfejsów i klas repozytoriów
 
-namespace Market.Web.Persistence.Data;
+namespace Market.Web.Persistence;
 
-public class UnitOfWork
+public class UnitOfWork : IUnitOfWork
 {
     private readonly ApplicationDbContext _context;
-    public AuctionRepository Auctions { get; }
-    public OrderRepository Orders { get; }
-    public ProfileRepository Profiles { get; }
+
     public UnitOfWork(ApplicationDbContext context)
     {
         _context = context;
-      
+        Auctions = new AuctionRepository(_context);
+        Orders = new OrderRepository(_context);
+        Profiles = new ProfileRepository(_context);
     }
-    public void Complete()
+
+    public IAuctionRepository Auctions { get; private set; }
+    public IOrderRepository Orders { get; private set; }
+    public IProfileRepository Profiles { get; private set; }
+
+    public async Task CompleteAsync()
     {
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
     }
 }

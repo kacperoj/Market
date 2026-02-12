@@ -5,6 +5,7 @@ using Market.Web.Core.Models;
 using Market.Web.Repositories;
 using Market.Web.Services;
 using Market.Web.Services.Payments;
+using Market.Web.Persistence;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
@@ -23,10 +24,9 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.R
 
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddScoped<IAuctionRepository, AuctionRepository>();
-builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
-builder.Services.AddScoped<IOrderRepository, OrderRepository>();
-builder.Services.AddScoped<Market.Web.Services.IAdminService, Market.Web.Services.AdminService>(); 
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+builder.Services.AddScoped<IAdminService, AdminService>(); 
 builder.Services.AddHttpClient<IADescriptionService, OpenRouterAiService>();
 builder.Services.AddScoped<IAuctionProcessingService, AuctionProcessingService>(); 
 
@@ -46,7 +46,7 @@ using (var scope = app.Services.CreateScope())
             await context.Database.MigrateAsync();
         }
 
-        await Market.Web.Data.DbSeeder.SeedRolesAndAdminAsync(services);
+        await DbSeeder.SeedRolesAndAdminAsync(services);
     }
     catch (Exception ex)
     {

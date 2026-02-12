@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Market.Web.Core.Models;
 using Market.Web.Core.ViewModels;
 using Market.Web.Repositories;
+using Market.Web.Persistence;
 
 namespace Market.Web.Controllers
 {
@@ -11,17 +12,14 @@ namespace Market.Web.Controllers
     public class ProfileController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IProfileRepository _profileRepository;
-        private readonly IOrderRepository _orderRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
         public ProfileController(
             UserManager<ApplicationUser> userManager, 
-            IProfileRepository profileRepository,
-            IOrderRepository orderRepository)
+            IUnitOfWork unitOfWork)
         {
             _userManager = userManager;
-            _profileRepository = profileRepository;
-            _orderRepository = orderRepository;
+            _unitOfWork = unitOfWork;
         }
 
         [HttpGet]
@@ -30,7 +28,7 @@ namespace Market.Web.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToAction("Login", "Account");
 
-            var userProfile = await _profileRepository.GetByUserIdAsync(user.Id);
+            var userProfile = await _unitOfWork.Profiles.GetByUserIdAsync(user.Id);
 
             var model = new EditProfileViewModel
             {
@@ -75,12 +73,12 @@ namespace Market.Web.Controllers
                 return View(model);
             }
 
-            var userProfile = await _profileRepository.GetByUserIdAsync(user.Id);
+            var userProfile = await _unitOfWork.Profiles.GetByUserIdAsync(user.Id);
 
             if (userProfile == null)
             {
                 userProfile = new UserProfile { UserId = user.Id };
-                await _profileRepository.AddAsync(userProfile);
+                await _unitOfWork.Profiles.AddAsync(userProfile);
             }
 
             userProfile.FirstName = model.FirstName;
@@ -104,12 +102,12 @@ namespace Market.Web.Controllers
             {
                 if (userProfile.CompanyProfile != null)
                 {
-                    _profileRepository.RemoveCompanyProfile(userProfile.CompanyProfile);
+                    _unitOfWork.Profiles.RemoveCompanyProfile(userProfile.CompanyProfile);
                     userProfile.CompanyProfile = null;
                 }
             }
 
-            await _profileRepository.SaveChangesAsync();
+            await _unitOfWork.CompleteAsync();
 
             TempData["SuccessMessage"] = "Profil został zaktualizowany.";
             return RedirectToAction("Index", "Home");
@@ -121,9 +119,9 @@ namespace Market.Web.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
-            var userProfile = await _profileRepository.GetByUserIdAsync(user.Id);
+            var userProfile = await _unitOfWork.Profiles.GetByUserIdAsync(user.Id);
 
-            var sales = await _orderRepository.GetSellerSalesAsync(user.Id);
+            var sales = await _unitOfWork.Orders.GetSellerSalesAsync(user.Id);
 
             decimal pending = sales
                 .Where(o => o.Status == OrderStatus.Paid || o.Status == OrderStatus.Shipped)
@@ -156,7 +154,7 @@ namespace Market.Web.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
             
-            var userProfile = await _profileRepository.GetByUserIdAsync(user.Id);
+            var userProfile = await _unitOfWork.Profiles.GetByUserIdAsync(user.Id);
 
             if (userProfile == null) return NotFound();
 
@@ -176,7 +174,7 @@ namespace Market.Web.Controllers
             
             userProfile.WalletBalance = 0;
             
-            await _profileRepository.SaveChangesAsync();
+            await _unitOfWork.CompleteAsync();
 
             TempData["SuccessMessage"] = $"Zlecono wypłatę {amountToWithdraw:N2} PLN na konto {userProfile.PrivateIBAN}.";
             return RedirectToAction(nameof(MyFinances));

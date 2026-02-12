@@ -1,4 +1,5 @@
-using Market.Web.DTOs;
+using Market.Web.Core.DTOs;
+
 
 namespace Market.Web.Services;
 

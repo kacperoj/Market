@@ -13,29 +13,30 @@ namespace Market.Web.Controllers;
 [Authorize] 
 public class AuctionsController : Controller
 {
-    private readonly IAuctionRepository _auctionRepository;
-    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IUnitOfWork _unitOfWork; 
+    private readonly IWebHostEnvironment _webHostEnvironment;
     private readonly IADescriptionService _aiDescriptionService;
-    private readonly IAuctionProcessingService _auctionProcessingService; 
-    private readonly IProfileRepository _profileRepository; 
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IAuctionProcessingService _auctionProcessingService;
 
-    public AuctionsController(IAuctionRepository auctionRepository, 
-                              UserManager<ApplicationUser> userManager, 
-                              IADescriptionService aiDescriptionService, 
-                              IAuctionProcessingService auctionProcessingService,
-                              IProfileRepository profileRepository)
+    public AuctionsController(
+        IUnitOfWork unitOfWork, 
+        IWebHostEnvironment webHostEnvironment, 
+        IADescriptionService aiDescriptionService,
+        UserManager<ApplicationUser> userManager, 
+        IAuctionProcessingService auctionProcessingService)
     {
-        _auctionRepository = auctionRepository;
-        _userManager = userManager;
+        _unitOfWork = unitOfWork;
+        _webHostEnvironment = webHostEnvironment;
         _aiDescriptionService = aiDescriptionService;
+        _userManager = userManager;
         _auctionProcessingService = auctionProcessingService;
-        _profileRepository = profileRepository;
     }
 
     [AllowAnonymous]
     public async Task<IActionResult> Index(string? searchString, string? category, decimal? minPrice, decimal? maxPrice, string? sortOrder)
     {
-        var auctions = await _auctionRepository.GetAllAsync();
+        var auctions = await _unitOfWork.Auctions.GetAllAsync();
 
         IEnumerable<Auction> query = auctions
             .Where(a => a.AuctionStatus == AuctionStatus.Active && a.EndDate > DateTime.Now);
@@ -59,7 +60,7 @@ public class AuctionsController : Controller
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
-        var auction = await _auctionRepository.GetByIdAsync(id.Value);
+        var auction = await _unitOfWork.Auctions.GetByIdAsync(id.Value);
         return auction == null ? NotFound() : View(auction);
     }
 
@@ -68,7 +69,7 @@ public class AuctionsController : Controller
     {
         var user = await GetCurrentUserAsync();
 
-        var userProfile = user != null ? await _profileRepository.GetByUserIdAsync(user.Id) : null;
+        var userProfile = user != null ? await _unitOfWork.Profiles.GetByUserIdAsync(user.Id) : null;
         bool hasCompanyProfile = userProfile?.CompanyProfile != null;
 
         ViewBag.CanSellAsCompany = hasCompanyProfile;
@@ -97,8 +98,8 @@ public class AuctionsController : Controller
         {
             auction.Images = await _auctionProcessingService.ProcessUploadedImagesWebpAsync(photos);
 
-            await _auctionRepository.AddAsync(auction);
-            await _auctionRepository.SaveChangesAsync();
+            await _unitOfWork.Auctions.AddAsync(auction);
+            await _unitOfWork.CompleteAsync();
             return RedirectToAction(nameof(Index));
         }
         return View(auction);
@@ -108,7 +109,7 @@ public class AuctionsController : Controller
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
-        var auction = await _auctionRepository.GetByIdAsync(id.Value);
+        var auction = await _unitOfWork.Auctions.GetByIdAsync(id.Value);
         if (auction == null) return NotFound();
 
         var user = await GetCurrentUserAsync();
@@ -123,7 +124,7 @@ public class AuctionsController : Controller
     public async Task<IActionResult> Edit(int id, Auction auction, List<IFormFile> photos)
     {
         if (id != auction.Id) return NotFound();
-        var auctionToUpdate = await _auctionRepository.GetByIdAsync(id);
+        var auctionToUpdate = await _unitOfWork.Auctions.GetByIdAsync(id);
         if (auctionToUpdate == null) return NotFound();
 
         var user = await GetCurrentUserAsync();
@@ -145,7 +146,7 @@ public class AuctionsController : Controller
             if (auctionToUpdate.Images == null) auctionToUpdate.Images = new List<AuctionImage>();
             foreach(var img in newImages) auctionToUpdate.Images.Add(img);
 
-            await _auctionRepository.SaveChangesAsync();
+            await _unitOfWork.CompleteAsync();
             return RedirectToAction(nameof(Index));
         }
         return View(auctionToUpdate);
@@ -156,7 +157,7 @@ public class AuctionsController : Controller
         var user = await GetCurrentUserAsync();
         if (user == null) return Challenge();
 
-        var auctionToExpire = await _auctionRepository.GetByIdAsync(id);
+        var auctionToExpire = await _unitOfWork.Auctions.GetByIdAsync(id);
         
         if (auctionToExpire == null) return NotFound();
 
@@ -164,7 +165,7 @@ public class AuctionsController : Controller
         
         auctionToExpire.AuctionStatus = AuctionStatus.Cancelled;
 
-        await _auctionRepository.SaveChangesAsync();
+        await _unitOfWork.CompleteAsync();
 
         TempData["SuccessMessage"] = "Oferta została zakończona.";
         return RedirectToAction(nameof(MyAuctions));

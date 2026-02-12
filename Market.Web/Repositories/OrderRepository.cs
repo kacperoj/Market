@@ -61,8 +61,4 @@ public class OrderRepository : IOrderRepository
     {
         await _context.Opinions.AddAsync(opinion);
     }
-    public async Task SaveChangesAsync()
-    {
-        await _context.SaveChangesAsync();
-    }
 }

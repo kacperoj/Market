@@ -17,10 +17,13 @@ namespace Market.Web.Controllers
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<WebhookController> _logger;
 
-        public WebhookController(IConfiguration configuration, IServiceScopeFactory scopeFactory, ILogger<WebhookController> logger)
+        private readonly IUnitOfWork _unitOfWork;
+
+        public WebhookController(IConfiguration configuration, IServiceScopeFactory scopeFactory, ILogger<WebhookController> logger, IUnitOfWork unitOfWork)
         {
             _configuration = configuration;
             _scopeFactory = scopeFactory;
+            _unitOfWork = unitOfWork;
             _logger = logger;
         }
 
@@ -80,9 +83,9 @@ namespace Market.Web.Controllers
             using (var scope = _scopeFactory.CreateScope())
             {
 
-                var orderRepo = scope.ServiceProvider.GetRequiredService<IOrderRepository>();
+                var orderRepo = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
                 
-                var order = await orderRepo.GetByIdAsync(orderId);
+                var order = await orderRepo.Orders.GetByIdAsync(orderId);
 
                 if (order == null)
                 {
@@ -94,7 +97,7 @@ namespace Market.Web.Controllers
                 {
                     order.Status = OrderStatus.Paid;
 
-                    await orderRepo.SaveChangesAsync();
+                    await orderRepo.CompleteAsync();
                     
                     _logger.LogInformation($"Zamówienie {orderId} opłacone pomyślnie.");
                 }

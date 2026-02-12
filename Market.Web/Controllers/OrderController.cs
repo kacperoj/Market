@@ -13,28 +13,22 @@ namespace Market.Web.Controllers
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly StripePaymentService _stripePaymentService;
-        private readonly IAuctionRepository _auctionRepository;
-        private readonly IProfileRepository _profileRepository;
-        private readonly IOrderRepository _orderRepository; 
+        private readonly IUnitOfWork _unitOfWork;
 
         public OrderController(
             UserManager<ApplicationUser> userManager, 
             StripePaymentService stripePaymentService,
-            IAuctionRepository auctionRepository,
-            IProfileRepository profileRepository,
-            IOrderRepository orderRepository) 
+            IUnitOfWork unitOfWork) 
         {
             _userManager = userManager;
             _stripePaymentService = stripePaymentService;
-            _auctionRepository = auctionRepository;
-            _profileRepository = profileRepository;
-            _orderRepository = orderRepository;
+            _unitOfWork = unitOfWork;
         }
 
         [HttpGet]
         public async Task<IActionResult> Checkout(int auctionId)
         {
-            var auction = await _auctionRepository.GetByIdAsync(auctionId);
+            var auction = await _unitOfWork.Auctions.GetByIdAsync(auctionId);
 
             if (auction == null || auction.Quantity <= 0 || auction.EndDate <= DateTime.Now)
             {
@@ -49,7 +43,7 @@ namespace Market.Web.Controllers
                  return RedirectToAction("Details", "Auctions", new { id = auction.Id });
             }
 
-            var userProfile = await _profileRepository.GetByUserIdAsync(user.Id);
+            var userProfile = await _unitOfWork.Profiles.GetByUserIdAsync(user.Id);
 
             var model = new CheckoutViewModel
             {
@@ -74,7 +68,7 @@ namespace Market.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> PlaceOrder(CheckoutViewModel model)
         {
-            var auction = await _auctionRepository.GetByIdAsync(model.AuctionId);
+            var auction = await _unitOfWork.Auctions.GetByIdAsync(model.AuctionId);
             
             if (auction == null || auction.Quantity <= 0) 
             {
@@ -83,7 +77,7 @@ namespace Market.Web.Controllers
             }
 
             var user = await _userManager.GetUserAsync(User);
-            var userProfile = await _profileRepository.GetByUserIdAsync(user.Id);
+            var userProfile = await _unitOfWork.Profiles.GetByUserIdAsync(user.Id);
 
             if (model.WantsInvoice && userProfile?.CompanyProfile == null)
             {
@@ -112,8 +106,8 @@ namespace Market.Web.Controllers
             auction.Quantity -= 1;
             if (auction.Quantity == 0) auction.AuctionStatus = AuctionStatus.Sold;
 
-            await _orderRepository.AddAsync(order);
-            await _orderRepository.SaveChangesAsync();
+            await _unitOfWork.Orders.AddAsync(order);
+            await _unitOfWork.CompleteAsync();
             
             try
             {
@@ -125,9 +119,8 @@ namespace Market.Web.Controllers
             {
                 auction.Quantity += 1;
                 if (auction.AuctionStatus == AuctionStatus.Sold) auction.AuctionStatus = AuctionStatus.Active;
-                
-                _orderRepository.Remove(order);
-                await _orderRepository.SaveChangesAsync();
+                _unitOfWork.Orders.Remove(order);
+                await _unitOfWork.CompleteAsync();
 
                 TempData["Error"] = "Błąd inicjalizacji płatności.";
                 return RedirectToAction("Details", "Auctions", new { id = model.AuctionId });
@@ -137,7 +130,7 @@ namespace Market.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> PaymentSuccess(int orderId, string session_id)
         {
-            var order = await _orderRepository.GetByIdAsync(orderId);
+            var order = await _unitOfWork.Orders.GetByIdAsync(orderId);
             if (order == null) return NotFound();
             
             return View("OrderConfirmation", order.Id);
@@ -156,7 +149,7 @@ namespace Market.Web.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
-            var orders = await _orderRepository.GetBuyerOrdersAsync(user.Id);
+            var orders = await _unitOfWork.Orders.GetBuyerOrdersAsync(user.Id);
 
             var model = orders.Select(o => new MyOrderViewModel
             {
@@ -185,7 +178,7 @@ namespace Market.Web.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
-            var sales = await _orderRepository.GetSellerSalesAsync(user.Id);
+            var sales = await _unitOfWork.Orders.GetSellerSalesAsync(user.Id);
 
             var model = sales.Select(o => new MySaleViewModel
             {
@@ -216,14 +209,14 @@ namespace Market.Web.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
-            var order = await _orderRepository.GetByIdAsync(orderId);
+            var order = await _unitOfWork.Orders.GetByIdAsync(orderId);
 
             if (order == null) return NotFound();
             if (order.Auction == null || order.Auction.UserId != user.Id) return Forbid();
 
             order.Status = newStatus;
             
-            await _orderRepository.SaveChangesAsync();
+            await _unitOfWork.CompleteAsync();
             
             TempData["SuccessMessage"] = $"Zmieniono status zamówienia #{order.Id} na {newStatus}.";
             return RedirectToAction(nameof(MySales));
@@ -236,7 +229,7 @@ namespace Market.Web.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
-            var order = await _orderRepository.GetByIdAsync(orderId);
+            var order = await _unitOfWork.Orders.GetByIdAsync(orderId);
 
             if (order == null) return NotFound();
             if (order.BuyerId != user.Id) return Forbid();
@@ -254,7 +247,7 @@ namespace Market.Web.Controllers
                 order.Auction.User.UserProfile.WalletBalance += order.TotalPrice;
             }
             
-            await _orderRepository.SaveChangesAsync();
+            await _unitOfWork.CompleteAsync();
             
             TempData["SuccessMessage"] = "Transakcja zakończona pomyślnie.";
             return RedirectToAction(nameof(MyOrders));
@@ -264,7 +257,7 @@ namespace Market.Web.Controllers
         public async Task<IActionResult> Rate(int id)
         {
             var user = await _userManager.GetUserAsync(User);
-            var order = await _orderRepository.GetByIdAsync(id);
+            var order = await _unitOfWork.Orders.GetByIdAsync(id);
 
             if (order == null) return NotFound();
             if (order.BuyerId != user.Id) return Forbid();
@@ -289,7 +282,7 @@ namespace Market.Web.Controllers
             if (!ModelState.IsValid) return View(model);
 
             var user = await _userManager.GetUserAsync(User);
-            var order = await _orderRepository.GetByIdAsync(model.OrderId); // ZMIANA
+            var order = await _unitOfWork.Orders.GetByIdAsync(model.OrderId); // ZMIANA
 
             if (order == null || order.BuyerId != user.Id) return Forbid();
             if (order.Opinion != null) return BadRequest("Już oceniono.");
@@ -304,8 +297,8 @@ namespace Market.Web.Controllers
                 CreatedAt = DateTime.Now
             };
 
-            await _orderRepository.AddOpinionAsync(opinion);
-            await _orderRepository.SaveChangesAsync();
+            await _unitOfWork.Orders.AddOpinionAsync(opinion);
+            await _unitOfWork.CompleteAsync();
 
             TempData["SuccessMessage"] = "Opinię dodano pomyślnie.";
             return RedirectToAction(nameof(MyOrders));

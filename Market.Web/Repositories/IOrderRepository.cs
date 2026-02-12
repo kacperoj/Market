@@ -10,5 +10,4 @@ public interface IOrderRepository
     void Remove(Order order);
     Task<Order?> GetByIdAsync(int id);
     Task AddOpinionAsync(Opinion opinion);
-    Task SaveChangesAsync();
 }

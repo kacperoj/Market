@@ -1,7 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using Market.Web.DTOs;
+using Market.Web.Core.DTOs;
 
 namespace Market.Web.Services;
 
