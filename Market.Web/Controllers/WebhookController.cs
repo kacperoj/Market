@@ -1,11 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Stripe;
 using Stripe.Checkout;
-using Market.Web.Persistence.Data;
 using Market.Web.Core.Models;
-using Microsoft.EntityFrameworkCore;
-using Stripe.V2.Core;
-using Market.Web.Repositories;
+using Market.Web.Services;
 
 namespace Market.Web.Controllers
 {
@@ -14,17 +11,17 @@ namespace Market.Web.Controllers
     public class WebhookController : ControllerBase
     {
         private readonly IConfiguration _configuration;
-        private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<WebhookController> _logger;
+        private readonly IOrderService _orderService;
 
-        private readonly IUnitOfWork _unitOfWork;
-
-        public WebhookController(IConfiguration configuration, IServiceScopeFactory scopeFactory, ILogger<WebhookController> logger, IUnitOfWork unitOfWork)
+        public WebhookController(
+            IConfiguration configuration, 
+            ILogger<WebhookController> logger, 
+            IOrderService orderService)
         {
             _configuration = configuration;
-            _scopeFactory = scopeFactory;
-            _unitOfWork = unitOfWork;
             _logger = logger;
+            _orderService = orderService;
         }
 
         [HttpPost("stripe")]
@@ -60,7 +57,7 @@ namespace Market.Web.Controllers
             
             _logger.LogInformation("Przetwarzanie sesji. Session ID: {Id}", session?.Id);
 
-            if (session == null || !session.Metadata.TryGetValue("OrderId", out string orderIdStr))
+            if (session == null || !session.Metadata.TryGetValue("OrderId", out string? orderIdStr))
             {
                  _logger.LogWarning("BŁĄD: Brak OrderId w metadanych sesji!");
                  return Ok(); 
@@ -71,37 +68,10 @@ namespace Market.Web.Controllers
                 return Ok();
             }
 
-            await MarkOrderAsPaid(orderId);
+            await _orderService.MarkOrderAsPaidAsync(orderId);
+            _logger.LogInformation($"Zlecono oznaczenie zamówienia {orderId} jako opłacone.");
 
             return Ok();
-        }
-
-
-        private async Task MarkOrderAsPaid(int orderId)
-        {
-        
-            using (var scope = _scopeFactory.CreateScope())
-            {
-
-                var orderRepo = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-                
-                var order = await orderRepo.Orders.GetByIdAsync(orderId);
-
-                if (order == null)
-                {
-                    _logger.LogError($"Zamówienie {orderId} nie znalezione.");
-                    return;
-                }
-
-                if (order.Status == OrderStatus.Pending)
-                {
-                    order.Status = OrderStatus.Paid;
-
-                    await orderRepo.CompleteAsync();
-                    
-                    _logger.LogInformation($"Zamówienie {orderId} opłacone pomyślnie.");
-                }
-            }
         }
     }
 }

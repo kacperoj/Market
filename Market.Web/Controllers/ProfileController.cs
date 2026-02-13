@@ -3,8 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Market.Web.Core.Models;
 using Market.Web.Core.ViewModels;
-using Market.Web.Repositories;
-using Market.Web.Persistence;
+using Market.Web.Services;
 
 namespace Market.Web.Controllers
 {
@@ -12,14 +11,14 @@ namespace Market.Web.Controllers
     public class ProfileController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IProfileService _profileService;
 
         public ProfileController(
             UserManager<ApplicationUser> userManager, 
-            IUnitOfWork unitOfWork)
+            IProfileService profileService)
         {
             _userManager = userManager;
-            _unitOfWork = unitOfWork;
+            _profileService = profileService;
         }
 
         [HttpGet]
@@ -28,23 +27,7 @@ namespace Market.Web.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToAction("Login", "Account");
 
-            var userProfile = await _unitOfWork.Profiles.GetByUserIdAsync(user.Id);
-
-            var model = new EditProfileViewModel
-            {
-                Email = user.Email,
-                FirstName = userProfile?.FirstName ?? "",
-                LastName = userProfile?.LastName ?? "",
-                PrivateIBAN = userProfile?.PrivateIBAN,
-                ShippingAddress = userProfile?.ShippingAddress ?? new Address(),
-                
-                HasCompanyProfile = userProfile?.CompanyProfile != null,
-                CompanyName = userProfile?.CompanyProfile?.CompanyName,
-                NIP = userProfile?.CompanyProfile?.NIP,
-                CompanyIBAN = userProfile?.CompanyProfile?.CompanyIBAN,
-                InvoiceAddress = userProfile?.CompanyProfile?.InvoiceAddress ?? new Address()
-            };
-
+            var model = await _profileService.GetEditProfileViewModelAsync(user.Id, user.Email!);
             return View(model);
         }
 
@@ -69,45 +52,11 @@ namespace Market.Web.Controllers
 
             if (!ModelState.IsValid)
             {
-                model.Email = user.Email; 
+                model.Email = user.Email!; 
                 return View(model);
             }
 
-            var userProfile = await _unitOfWork.Profiles.GetByUserIdAsync(user.Id);
-
-            if (userProfile == null)
-            {
-                userProfile = new UserProfile { UserId = user.Id };
-                await _unitOfWork.Profiles.AddAsync(userProfile);
-            }
-
-            userProfile.FirstName = model.FirstName;
-            userProfile.LastName = model.LastName;
-            userProfile.PrivateIBAN = model.PrivateIBAN;
-            userProfile.ShippingAddress = model.ShippingAddress;
-
-            if (model.HasCompanyProfile)
-            {
-                if (userProfile.CompanyProfile == null)
-                {
-                    userProfile.CompanyProfile = new CompanyProfile();
-                }
-
-                userProfile.CompanyProfile.CompanyName = model.CompanyName!;
-                userProfile.CompanyProfile.NIP = model.NIP!;
-                userProfile.CompanyProfile.CompanyIBAN = model.CompanyIBAN;
-                userProfile.CompanyProfile.InvoiceAddress = model.InvoiceAddress;
-            }
-            else
-            {
-                if (userProfile.CompanyProfile != null)
-                {
-                    _unitOfWork.Profiles.RemoveCompanyProfile(userProfile.CompanyProfile);
-                    userProfile.CompanyProfile = null;
-                }
-            }
-
-            await _unitOfWork.CompleteAsync();
+            await _profileService.UpdateProfileAsync(user.Id, model);
 
             TempData["SuccessMessage"] = "Profil został zaktualizowany.";
             return RedirectToAction("Index", "Home");
@@ -119,31 +68,7 @@ namespace Market.Web.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
-            var userProfile = await _unitOfWork.Profiles.GetByUserIdAsync(user.Id);
-
-            var sales = await _unitOfWork.Orders.GetSellerSalesAsync(user.Id);
-
-            decimal pending = sales
-                .Where(o => o.Status == OrderStatus.Paid || o.Status == OrderStatus.Shipped)
-                .Sum(o => o.TotalPrice);
-
-            var model = new MyFinancesViewModel
-            {
-                IBAN = userProfile?.PrivateIBAN ?? "",
-                AvailableFunds = userProfile?.WalletBalance ?? 0,
-                PendingFunds = pending,
-                
-                Transactions = sales.Select(s => new FinanceTransactionDto
-                {
-                    OrderId = s.Id,
-                    Date = s.OrderDate,
-                    Title = s.Auction?.Title ?? "Usunięta aukcja",
-                    Amount = s.TotalPrice,
-                    Status = s.Status,
-                    BuyerName = s.Buyer?.UserName ?? "Nieznany"
-                }).ToList()
-            };
-
+            var model = await _profileService.GetFinancesViewModelAsync(user.Id);
             return View(model);
         }
 
@@ -153,30 +78,19 @@ namespace Market.Web.Controllers
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
-            
-            var userProfile = await _unitOfWork.Profiles.GetByUserIdAsync(user.Id);
 
-            if (userProfile == null) return NotFound();
+            var result = await _profileService.WithdrawFundsAsync(user.Id);
 
-            if (string.IsNullOrEmpty(userProfile.PrivateIBAN))
+            if (!result.Success)
             {
-                TempData["Error"] = "Brak numeru konta IBAN. Uzupełnij profil.";
-                return RedirectToAction(nameof(MyFinances));
+                TempData["Error"] = result.Message;
+            }
+            else
+            {
+                var userProfile = await _profileService.GetByUserIdAsync(user.Id);
+                TempData["SuccessMessage"] = $"Zlecono wypłatę {result.Amount:N2} PLN na konto {userProfile?.PrivateIBAN}.";
             }
 
-            if (userProfile.WalletBalance <= 0)
-            {
-                TempData["Error"] = "Brak środków do wypłaty.";
-                return RedirectToAction(nameof(MyFinances));
-            }
-
-            decimal amountToWithdraw = userProfile.WalletBalance;
-            
-            userProfile.WalletBalance = 0;
-            
-            await _unitOfWork.CompleteAsync();
-
-            TempData["SuccessMessage"] = $"Zlecono wypłatę {amountToWithdraw:N2} PLN na konto {userProfile.PrivateIBAN}.";
             return RedirectToAction(nameof(MyFinances));
         }
     }

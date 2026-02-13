@@ -16,4 +16,6 @@ public interface IOrderService
     Task UpdateOrderStatusAsync(int orderId, OrderStatus newStatus, string sellerId);
     Task ConfirmDeliveryAsync(int orderId, string buyerId);
     Task AddOpinionAsync(RateOrderViewModel model, string buyerId);
+
+    Task MarkOrderAsPaidAsync(int orderId);
 }

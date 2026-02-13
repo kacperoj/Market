@@ -206,4 +206,15 @@ public class OrderService : IOrderService
         await _unitOfWork.Orders.AddOpinionAsync(opinion);
         await _unitOfWork.CompleteAsync();
     }
+
+    public async Task MarkOrderAsPaidAsync(int orderId)
+    {
+        var order = await _unitOfWork.Orders.GetByIdAsync(orderId);
+        
+        if (order != null && order.Status == OrderStatus.Pending)
+        {
+            order.Status = OrderStatus.Paid;
+            await _unitOfWork.CompleteAsync();
+        }
+    }
 }
