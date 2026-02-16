@@ -59,7 +59,7 @@ namespace Market.Web.Controllers
             await _profileService.UpdateProfileAsync(user.Id, model);
 
             TempData["SuccessMessage"] = "Profil został zaktualizowany.";
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("Index", "Auctions");
         }
 
         [HttpGet]

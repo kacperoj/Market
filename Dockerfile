@@ -6,6 +6,7 @@ WORKDIR /src
 COPY ["Market.sln", "./"]
 COPY ["Market.Web/Market.Web.csproj", "Market.Web/"]
 
+COPY ["Market.Tests/Market.Tests.csproj", "Market.Tests/"] 
 # Restore zależności
 RUN dotnet restore "Market.sln"
 

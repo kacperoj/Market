@@ -1,8 +1,309 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Market.AI - Developer Showcase";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<style>
+    body {
+        background-color: #121212 !important; 
+        color: #e0e0e0;
+    }
+
+    .hero-glow {
+        position: absolute;
+        top: -10%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60%;
+        height: 60%;
+        background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+        z-index: -1;
+        pointer-events: none;
+    }
+
+    .feature-card {
+        background-color: #1e1e1e;
+        border: 1px solid rgba(255,255,255,0.05);
+        transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-5px);
+        border-color: rgba(99, 102, 241, 0.5); 
+        box-shadow: 0 10px 30px rgba(0,0,0, 0.5);
+    }
+
+    .credential-box {
+        background: #252525;
+        border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .tech-item {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 12px 20px;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .tech-item:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .gradient-text {
+        background: linear-gradient(90deg, #818cf8, #c084fc);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .copy-cursor { cursor: pointer; }
+    .copy-cursor:active { transform: scale(0.98); opacity: 0.8; }
+</style>
+
+<div class="container py-5 position-relative">
+    <div class="hero-glow"></div>
+    
+    <div class="row justify-content-center text-center mb-5 pb-4">
+        <div class="col-lg-10">
+            <h1 class="display-3 fw-bold text-white mb-3 tracking-tight">
+                Market AI platforma <br /><span class="gradient-text">C2C E-commerce</span>
+            </h1>
+            
+            <div class="d-flex justify-content-center mb-4">
+                <span class="badge bg-dark border border-secondary border-opacity-50 text-light px-4 py-2 rounded-pill d-flex align-items-center gap-2">
+                    <i class="bi bi-code-slash text-info"></i> 
+                    .NET 8.0 & Clean Architecture Showcase
+                </span>
+            </div>
+
+            <p class="lead text-secondary mx-auto mb-5" style="max-width: 700px;">
+                Projekt demonstrujący zaawansowaną integrację <strong>AI (GPT-4o Vision)</strong>, bezpieczne systemy płatności oraz solidne wzorce projektowe w ekosystemie ASP.NET Core.
+            </p>
+            
+            <div class="d-flex gap-3 justify-content-center">
+                <a href="/Auctions" class="btn btn-primary btn-lg fw-bold px-5 shadow-lg">
+                    <i class="bi bi-rocket-takeoff-fill me-2"></i>Demo Aplikacji
+                </a>
+                <a href="https://github.com/TwojNick/Market" target="_blank" class="btn btn-outline-secondary btn-lg px-4">
+                    <i class="bi bi-github me-2"></i>Kod Źródłowy
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4 text-center">
+        <div class="col-12">
+            <h2 class="fw-bold text-white display-6">
+                Kluczowe rozwiązania <span class="gradient-text">techniczne</span>
+            </h2>
+            <p class="text-muted">Co wyróżnia ten projekt pod maską?</p>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-6 col-lg-3">
+            <div class="card feature-card h-100 p-4 rounded-4">
+                <div class="mb-3">
+                    <i class="bi bi-diagram-3-fill fs-2 text-info"></i>
+                </div>
+                <h5 class="fw-bold text-white">Clean Architecture</h5>
+                <p class="text-secondary small">
+                    Implementacja wzorca <strong>Repository & Unit of Work</strong>. Logika biznesowa ściśle odseparowana w warstwie <code>Services</code>.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card feature-card h-100 p-4 rounded-4">
+                <div class="mb-3">
+                    <i class="bi bi-stars fs-2 text-warning"></i>
+                </div>
+                <h5 class="fw-bold text-white">Generative AI</h5>
+                <p class="text-secondary small">
+                    Wykorzystanie <strong>GPT-4o Vision</strong> do analizy zdjęć. System generuje tytuł i <em>Deep Specs</em> automatycznie.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card feature-card h-100 p-4 rounded-4">
+                <div class="mb-3">
+                    <i class="bi bi-shield-check fs-2 text-success"></i>
+                </div>
+                <h5 class="fw-bold text-white">Security & AOP</h5>
+                <p class="text-secondary small">
+                    Zarządzanie uprawnieniami przez <strong>własne atrybuty</strong> (np. <code>[Buyer]</code>). Rozszerzenie Identity.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card feature-card h-100 p-4 rounded-4">
+                <div class="mb-3">
+                    <i class="bi bi-wallet2 fs-2" style="color: #635bff;"></i>
+                </div>
+                <h5 class="fw-bold text-white">Finanse & Stripe</h5>
+                <p class="text-secondary small">
+                    Webhooki Stripe, transakcje atomowe i wewnętrzny "Ledger" (portfel) zapobiegający błędom finansowym.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card feature-card rounded-4 p-4 p-lg-5">
+                <div class="d-flex align-items-center mb-4 pb-2 border-bottom border-secondary border-opacity-25">
+                    <i class="bi bi-key-fill text-warning fs-3 me-3"></i>
+                    <div>
+                        <h4 class="fw-bold text-white mb-0">Dane Testowe</h4>
+                        <small class="text-muted">Kliknij na pole z hasłem, aby je odkryć i skopiować</small>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="credential-box p-3 rounded-3 h-100">
+                            <label class="small text-uppercase fw-bold text-info mb-3 d-block"><i class="bi bi-person-badge-fill me-2"></i>Admin / Sprzedawca</label>
+                            
+                            <div class="input-group mb-3">
+                                <span class="input-group-text bg-dark border-secondary text-secondary ps-3"><i class="bi bi-envelope"></i></span>
+
+                                <input type="text" class="form-control bg-dark border-secondary text-white copy-cursor py-2" value="admin@demo.com" readonly onclick="copyToClipboard(this)">
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text bg-dark border-secondary text-secondary ps-3"><i class="bi bi-lock"></i></span>
+
+                                <input type="text" 
+                                       class="form-control bg-dark border-secondary text-white copy-cursor py-2" 
+                                       value="••••••••" 
+                                       data-rot13="Nqzva123!" " 
+                                       readonly 
+                                       onclick="revealRot13(this)">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="credential-box p-3 rounded-3 h-100">
+                            <label class="small text-uppercase fw-bold text-success mb-3 d-block"><i class="bi bi-person-check-fill me-2"></i>Kupujący (Standard)</label>
+                            
+                            <div class="input-group mb-3">
+                                <span class="input-group-text bg-dark border-secondary text-secondary ps-3"><i class="bi bi-envelope"></i></span>
+                                <input type="text" class="form-control bg-dark border-secondary text-white copy-cursor py-2" value="buyer@demo.com" readonly onclick="copyToClipboard(this)">
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text bg-dark border-secondary text-secondary ps-3"><i class="bi bi-lock"></i></span>
+
+                                <input type="text" 
+                                       class="form-control bg-dark border-secondary text-white copy-cursor py-2" 
+                                       value="••••••••" 
+                                       data-rot13="Hfre123!"
+                                       readonly 
+                                       onclick="revealRot13(this)">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <h5 class="fw-bold text-secondary text-uppercase ls-1 mb-4 text-center">Tech Stack & Infrastructure</h5>
+            
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+
+                <div class="tech-item text-white">
+                    <i class="bi bi-box-seam text-primary"></i> <span class="fw-semibold">.NET 8</span>
+                </div>
+                <div class="tech-item text-white">
+                    <i class="bi bi-layout-text-window-reverse text-primary"></i> ASP.NET Core MVC
+                </div>
+                <div class="tech-item text-white">
+                    <i class="bi bi-database text-info"></i> Entity Framework Core
+                </div>
+                
+                <div class="tech-item text-white">
+                    <i class="bi bi-hdd-network text-info"></i> PostgreSQL
+                </div>
+                <div class="tech-item text-white">
+                    <i class="bi bi-robot text-warning"></i> OpenAI API
+                </div>
+                <div class="tech-item text-white">
+                    <i class="bi bi-credit-card text-white"></i> Stripe
+                </div>
+
+                <div class="tech-item text-white">
+                    <i class="bi bi-boxes text-primary"></i> Docker
+                </div>
+                <div class="tech-item text-white">
+                    <i class="bi bi-bootstrap text-white" style="color: #bf94e4 !important;"></i> Bootstrap 5
+                </div>
+                <div class="tech-item text-white">
+                    <i class="bi bi-images text-danger"></i> ImageSharp
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="py-5"></div> 
 </div>
+
+<script>
+    <meta name="robots" content="noindex, nofollow"/>
+    function copyToClipboard(element) {
+        navigator.clipboard.writeText(element.value);
+        triggerVisualFeedback(element);
+    }
+
+    // Funkcja dekodująca ROT13
+    function revealRot13(element) {
+        // 1. Pobierz zakodowaną treść
+        const encoded = element.getAttribute('data-rot13');
+        if (!encoded) return;
+
+        // 2. Magia ROT13 (Regex zamieniający litery o 13 pozycji)
+        const decoded = encoded.replace(/[a-zA-Z]/g, function (char) {
+            var base = char <= 'Z' ? 65 : 97;
+            return String.fromCharCode((char.charCodeAt(0) - base + 13) % 26 + base);
+        });
+
+        // 3. Pokaż
+        element.value = decoded;
+        element.type = "text"; 
+
+        // 4. Skopiuj
+        navigator.clipboard.writeText(decoded);
+
+        // 5. Efekt wizualny
+        triggerVisualFeedback(element, true);
+        
+        // 6. Ukryj po 3 sekundach
+        setTimeout(() => {
+            element.value = "••••••••";
+            // Reset stylów robimy w triggerVisualFeedback lub tutaj ręcznie
+            element.classList.remove('text-success', 'fw-bold');
+            element.classList.add('text-white');
+        }, 3000);
+    }
+
+    function triggerVisualFeedback(element, isSuccess = false) {
+        const originalClass = element.className;
+        
+        if (isSuccess) {
+            element.classList.remove('text-white');
+            element.classList.add('text-success', 'fw-bold');
+        } else {
+            element.style.backgroundColor = "rgba(13, 110, 253, 0.2)";
+            setTimeout(() => {
+                element.style.backgroundColor = ""; 
+            }, 200);
+        }
+    }
+</script>

@@ -6,16 +6,20 @@ namespace Market.Web.Controllers;
 
 public class HomeController : Controller
 {
-    private readonly ILogger<HomeController> _logger;
 
-    public HomeController(ILogger<HomeController> logger)
+    public HomeController()
     {
-        _logger = logger;
     }
 
+    [Route("demo-access-preview-t5khy79jyuxby2lolnx4n5r90z58")] 
     public IActionResult Index()
     {
         return View();
+    }
+
+    public IActionResult RedirectToApp()
+    {
+        return RedirectToAction("Index", "Auctions");
     }
 
     public IActionResult Privacy()
