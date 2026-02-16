@@ -262,32 +262,25 @@
         triggerVisualFeedback(element);
     }
 
-    // Funkcja dekodująca ROT13
     function revealRot13(element) {
-        // 1. Pobierz zakodowaną treść
+        
         const encoded = element.getAttribute('data-rot13');
         if (!encoded) return;
 
-        // 2. Magia ROT13 (Regex zamieniający litery o 13 pozycji)
         const decoded = encoded.replace(/[a-zA-Z]/g, function (char) {
             var base = char <= 'Z' ? 65 : 97;
             return String.fromCharCode((char.charCodeAt(0) - base + 13) % 26 + base);
         });
 
-        // 3. Pokaż
         element.value = decoded;
         element.type = "text"; 
 
-        // 4. Skopiuj
         navigator.clipboard.writeText(decoded);
 
-        // 5. Efekt wizualny
         triggerVisualFeedback(element, true);
-        
-        // 6. Ukryj po 3 sekundach
+
         setTimeout(() => {
             element.value = "••••••••";
-            // Reset stylów robimy w triggerVisualFeedback lub tutaj ręcznie
             element.classList.remove('text-success', 'fw-bold');
             element.classList.add('text-white');
         }, 3000);
